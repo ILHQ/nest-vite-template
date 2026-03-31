@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no"
+    />
+    <title><%= title %></title>
+    <link rel="icon" type="image/svg+xml" href="<%= faviconPath %>" />
+    <% for (const cssFile of cssFiles) { %>
+      <link rel="stylesheet" href="<%= cssFile %>" />
+    <% } %>
+  </head>
+  <body>
+    <div id="root"></div>
+    <% if (typeof viteClientScript !== 'undefined') { %>
+      <script type="module">
+        import RefreshRuntime from '<%= reactRefreshPreamblePath %>';
+        RefreshRuntime.injectIntoGlobalHook(window);
+        window.$RefreshReg$ = () => {};
+        window.$RefreshSig$ = () => (type) => type;
+        window.__vite_plugin_react_preamble_installed__ = true;
+      </script>
+      <script type="module" src="<%= viteClientScript %>"></script>
+    <% } %>
+    <script type="module" src="<%= entryScript %>"></script>
+  </body>
+</html>
