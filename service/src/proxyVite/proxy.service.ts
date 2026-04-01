@@ -11,8 +11,8 @@ type ProxyMiddleware = RequestHandler & {
 @Injectable()
 export class ProxyViteService {
   // 健康检查接口。
-  getHealth(): string {
-    return 'hello!';
+  getHealth(): typeof envConfig {
+    return envConfig;
   }
 
   // 去掉 query，统一按路径做匹配判断。

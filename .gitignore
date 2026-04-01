@@ -54,6 +54,7 @@ lerna-debug.log*
 # archives
 *.zip
 *.tar
+*.gz
 
 # runtime / reports
 pids/

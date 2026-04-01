@@ -18,6 +18,16 @@ type RuntimePaths = {
   frontendDistRoot: string;
 };
 
+type EnvConfig = {
+  pkg: PackageJson;
+  paths: RuntimePaths;
+  servicePort: number;
+  frontendDevOrigin: string;
+  routerPrefix: string;
+  proxyPrefix: string;
+  frontendAssetsPublicPath: string;
+};
+
 // 定位应用根目录，兼容仓库内运行与 out 包内运行。
 function resolveRepoRoot(): string {
   const candidates = [path.resolve(__dirname, '..'), path.resolve(__dirname, '../..')];
@@ -57,20 +67,60 @@ function resolveRuntimePaths(repoRoot: string): RuntimePaths {
   };
 }
 
+// 将字符串端口转换为 number；非法值回退默认值。
+function parsePort(rawPort: string | undefined, fallbackPort: number): number {
+  if (!rawPort) {
+    return fallbackPort;
+  }
+
+  const parsedPort = Number(rawPort);
+  return Number.isInteger(parsedPort) && parsedPort > 0 ? parsedPort : fallbackPort;
+}
+
+// 解析容器环境变量中的 JSON 配置，非法 JSON 时忽略。
+function parseServiceEnvConfig(): Partial<EnvConfig> {
+  const rawConfig = process.env.SERVICE_ENV_CONFIG;
+
+  if (!rawConfig) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(rawConfig) as Partial<EnvConfig>;
+  } catch {
+    return {};
+  }
+}
+
+// 从 process.env 中提取覆盖项，并保持 router/proxy 的默认推导关系。
+function resolveEnvOverrides(baseConfig: EnvConfig): Partial<EnvConfig> {
+  const routerPrefix = process.env.ROUTER_PREFIX ?? baseConfig.routerPrefix;
+  const proxyPrefix = process.env.PROXY_PREFIX ?? `${routerPrefix}/proxy`;
+  const frontendAssetsPublicPath =
+    process.env.FRONTEND_ASSETS_PUBLIC_PATH ?? `${routerPrefix}/frontend/dist/`;
+
+  return {
+    servicePort: parsePort(process.env.SERVICE_PORT, baseConfig.servicePort),
+    frontendDevOrigin: process.env.FRONTEND_DEV_ORIGIN ?? baseConfig.frontendDevOrigin,
+    routerPrefix,
+    proxyPrefix,
+    frontendAssetsPublicPath,
+  };
+}
+
 const repoRoot = resolveRepoRoot();
 const runtimePaths = resolveRuntimePaths(repoRoot);
 const pkg = JSON.parse(readFileSync(path.join(repoRoot, 'package.json'), 'utf-8')) as PackageJson;
 const routerPrefix = `/app/${pkg.name}`;
 
-export default merge(
-  {
-    pkg,
-    paths: runtimePaths,
-    servicePort: 3000,
-    frontendDevOrigin: 'http://127.0.0.1:3100',
-    routerPrefix,
-    proxyPrefix: `${routerPrefix}/proxy`,
-    frontendAssetsPublicPath: `${routerPrefix}/frontend/dist/`,
-  },
-  // customConfig,
-);
+const baseConfig: EnvConfig = {
+  pkg,
+  paths: runtimePaths,
+  servicePort: 3000,
+  frontendDevOrigin: 'http://127.0.0.1:3100',
+  routerPrefix,
+  proxyPrefix: `${routerPrefix}/proxy`,
+  frontendAssetsPublicPath: `${routerPrefix}/frontend/dist/`,
+};
+
+export default merge({}, baseConfig, resolveEnvOverrides(baseConfig), parseServiceEnvConfig());

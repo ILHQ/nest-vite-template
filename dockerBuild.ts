@@ -22,9 +22,10 @@ function buildDockerImage(imageTag) {
   }
 }
 
-// 将镜像导出为 tar 文件，便于离线分发。
-function saveDockerImage(imageTag, tarPath) {
-  const result = shell.exec(`docker save -o "${tarPath}" "${imageTag}"`, { cwd: rootDir });
+// 将镜像导出并压缩为 tar.gz 文件，便于离线分发。
+function saveDockerImage(imageTag, tarGzPath) {
+  shell.rm('-f', tarGzPath);
+  const result = shell.exec(`docker save "${imageTag}" | gzip > "${tarGzPath}"`, { cwd: rootDir });
 
   if (result.code !== 0) {
     shell.exit(result.code);
@@ -40,11 +41,11 @@ function main() {
 
   const pkg = readRootPackageJson();
   const imageTag = `${pkg.name}:${pkg.version}`;
-  const imageTarPath = path.join(rootDir, `${pkg.name}_${pkg.version}.tar`);
+  const imageTarGzPath = path.join(rootDir, `docker_${pkg.name}_${pkg.version}.tar.gz`);
 
   buildDockerImage(imageTag);
-  saveDockerImage(imageTag, imageTarPath);
-  shell.echo(`镜像构建并导出完成：${imageTag} -> ${imageTarPath}`);
+  saveDockerImage(imageTag, imageTarGzPath);
+  shell.echo(`镜像构建并导出完成：${imageTag} -> ${imageTarGzPath}`);
 }
 
 main();

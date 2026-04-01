@@ -28,7 +28,7 @@ export class ProxyViteController {
 
   // 服务健康检查。
   @Get(`/health`)
-  getHealth(): string {
+  getHealth(): typeof envConfig {
     return this.proxyViteService.getHealth();
   }
 

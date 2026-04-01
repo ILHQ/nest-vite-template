@@ -122,45 +122,44 @@ npm run start:prod
   shell.chmod('+x', scriptPath);
 }
 
-// 打包 out 为 zip，命名为 root package 的 name_version。
-function zipOutDirectory(rootPkg, releaseVersion) {
-  const zipName = `${rootPkg.name}_${releaseVersion}.zip`;
-  const zipPath = path.join(rootDir, zipName);
-  shell.rm('-f', zipPath);
+// 打包 out 为 tar.gz，命名为 root package 的 name_version。
+function archiveOutDirectory(rootPkg, releaseVersion) {
+  const archiveName = `${rootPkg.name}_${releaseVersion}.tar.gz`;
+  const archivePath = path.join(rootDir, archiveName);
+  shell.rm('-f', archivePath);
 
-  const result = shell.exec(`zip -rq "${zipPath}" "out"`, { cwd: rootDir });
+  const result = shell.exec(`tar -czf "${archivePath}" "out"`, { cwd: rootDir });
   if (result.code !== 0) {
     shell.exit(result.code);
   }
 
-  return zipName;
+  return archiveName;
 }
 
-// 删除 out 目录，只保留打包后的 zip。
+// 删除 out 目录，只保留打包后的压缩包。
 function removeOutDirectory() {
   shell.rm('-rf', outDir);
 }
 
-// 在根目录生成 Dockerfile，用于解压 zip 并启动服务。
-function createDockerfile(zipName) {
+// 在根目录生成 Dockerfile，用于解压 tar.gz 并启动服务。
+function createDockerfile(archiveName) {
   const dockerfilePath = path.join(rootDir, 'Dockerfile');
   const dockerfileContent = `FROM node:22-slim
 
 ENV ARRANGE_PATH=/home/admin/source
 WORKDIR $ARRANGE_PATH
 
-COPY ${zipName} ./
+COPY ${archiveName} ./
 
-RUN apt-get update \\
-  && apt-get install -y --no-install-recommends unzip \\
-  && unzip ${zipName} \\
-  && rm -f ${zipName} \\
+RUN tar -xzf ${archiveName} \\
+  && rm -f ${archiveName} \\
   && corepack enable \\
   && corepack prepare pnpm@latest --activate \\
+  && pnpm config set registry https://registry.npmmirror.com \\
+  && npm config set registry https://registry.npmmirror.com \\
   && cd $ARRANGE_PATH/out/service \\
   && pnpm install --prod --frozen-lockfile \\
-  && npm install pm2@latest -g \\
-  && rm -rf /var/lib/apt/lists/*
+  && npm install pm2@latest -g
 
 WORKDIR $ARRANGE_PATH/out/bin
 
@@ -170,6 +169,21 @@ CMD ["./start.sh"]
 `;
 
   fs.writeFileSync(dockerfilePath, dockerfileContent);
+}
+
+// 执行 dockerBuild.ts，构建并导出镜像。
+function runDockerBuildScript() {
+  const dockerBuildScriptPath = path.join(rootDir, 'dockerBuild.ts');
+
+  if (!shell.test('-f', dockerBuildScriptPath)) {
+    shell.echo('未找到 dockerBuild.ts，跳过镜像构建。');
+    return;
+  }
+
+  const result = shell.exec('node "./dockerBuild.ts"', { cwd: rootDir });
+  if (result.code !== 0) {
+    shell.exit(result.code);
+  }
 }
 
 function main() {
@@ -183,11 +197,12 @@ function main() {
   copyServiceDistToOut();
   writeOutPackageJson(rootPkg, releaseVersion);
   createOutStartScript();
-  const zipName = zipOutDirectory(rootPkg, releaseVersion);
+  const archiveName = archiveOutDirectory(rootPkg, releaseVersion);
   removeOutDirectory();
-  createDockerfile(zipName);
+  createDockerfile(archiveName);
   writeRootPackageJson(rootPkg, releaseVersion);
-  shell.echo(`已完成打包，产物：${zipName}`);
+  runDockerBuildScript();
+  shell.echo(`已完成打包，产物：${archiveName}`);
 }
 
 main();
