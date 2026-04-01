@@ -50,10 +50,11 @@ function copyDistToOut() {
 // 复制 service 下除 dist 外的文件到 out/service 目录。
 function copyServiceFilesToOut() {
   const entries = shell.ls('-A', serviceDir);
+  const excludedEntries = new Set(['dist', 'node_modules', '.DS_Store']);
   shell.mkdir('-p', outServiceDir);
 
   for (const entry of entries) {
-    if (entry === 'dist') {
+    if (excludedEntries.has(entry) || entry.startsWith('npm-debug.log')) {
       continue;
     }
 
@@ -154,6 +155,10 @@ RUN apt-get update \\
   && apt-get install -y --no-install-recommends unzip \\
   && unzip ${zipName} \\
   && rm -f ${zipName} \\
+  && corepack enable \\
+  && corepack prepare pnpm@latest --activate \\
+  && cd $ARRANGE_PATH/out/service \\
+  && pnpm install --prod --frozen-lockfile \\
   && npm install pm2@latest -g \\
   && rm -rf /var/lib/apt/lists/*
 
