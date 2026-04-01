@@ -92,7 +92,7 @@ export class ProxyViteService {
   // 创建 Vite 开发服务代理中间件。
   createViteDevProxy(): ProxyMiddleware {
     return createProxyMiddleware({
-      target: envConfig.frontendDevOrigin,
+      target: `http://localhost:${envConfig.frontendPort}`,
       ws: true,
       changeOrigin: true,
       pathFilter: (pathname, req) => this.shouldProxyViteRequest(pathname, req.headers.accept),

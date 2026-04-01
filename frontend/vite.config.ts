@@ -57,16 +57,9 @@ export default defineConfig(({ command }) => {
       postcss: path.resolve(__dirname, 'postcss.config.js'),
     },
     server: {
-      host: '0.0.0.0',
-      port: 3100,
+      host: 'localhost',
+      port: envConfig.frontendPort,
       strictPort: true,
-      proxy: {
-        '/api': {
-          target: 'http://192.168.3.200:60207',
-          changeOrigin: true,
-          rewrite: (proxyPath) => proxyPath.replace(/^\/api/, ''),
-        },
-      },
     },
   };
 });

@@ -6,6 +6,21 @@ import envConfig from '../env';
 import { EventEmitter } from 'events';
 import { ProxyViteService } from './proxyVite/proxy.service';
 import process from 'process';
+import { networkInterfaces } from 'os';
+
+// 获取所有可用的局域网 IPv4 地址。
+function getLanIPv4Addresses(): string[] {
+  const networkInfo = networkInterfaces();
+  const addresses = Object.values(networkInfo)
+    .flatMap((interfaces) => interfaces ?? [])
+    .filter((item) => {
+      const isIPv4 = item.family === 'IPv4';
+      return isIPv4 && !item.internal;
+    })
+    .map((item) => item.address);
+
+  return Array.from(new Set(addresses));
+}
 
 // 初始化服务并挂载 Vite 开发代理。
 async function bootstrap() {
@@ -47,6 +62,20 @@ async function bootstrap() {
 
   EventEmitter.defaultMaxListeners = Infinity;
 
-  await app.listen(envConfig.servicePort);
+  const servicePort = envConfig.servicePort;
+  await app.listen(servicePort);
+
+  const entryUrl = `http://localhost:${servicePort}${envConfig.routerPrefix}`;
+  console.log(`[service] started at ${entryUrl}`);
+
+  const lanAddresses = getLanIPv4Addresses();
+  if (lanAddresses.length > 0) {
+    for (const address of lanAddresses) {
+      const lanEntryUrl = `http://${address}:${servicePort}${envConfig.routerPrefix}`;
+      console.log(`[service] lan started at ${lanEntryUrl}`);
+    }
+  } else {
+    console.log('[service] 未检测到可用的局域网 IPv4 地址');
+  }
 }
 void bootstrap();

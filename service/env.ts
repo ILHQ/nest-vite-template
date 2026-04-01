@@ -22,7 +22,7 @@ type EnvConfig = {
   pkg: PackageJson;
   paths: RuntimePaths;
   servicePort: number;
-  frontendDevOrigin: string;
+  frontendPort: number;
   routerPrefix: string;
   proxyPrefix: string;
   frontendAssetsPublicPath: string;
@@ -101,7 +101,7 @@ function resolveEnvOverrides(baseConfig: EnvConfig): Partial<EnvConfig> {
 
   return {
     servicePort: parsePort(process.env.SERVICE_PORT, baseConfig.servicePort),
-    frontendDevOrigin: process.env.FRONTEND_DEV_ORIGIN ?? baseConfig.frontendDevOrigin,
+    frontendPort: parsePort(process.env.FRONTEND_PORT, baseConfig.frontendPort),
     routerPrefix,
     proxyPrefix,
     frontendAssetsPublicPath,
@@ -117,7 +117,7 @@ const baseConfig: EnvConfig = {
   pkg,
   paths: runtimePaths,
   servicePort: 3000,
-  frontendDevOrigin: 'http://127.0.0.1:3100',
+  frontendPort: 3100,
   routerPrefix,
   proxyPrefix: `${routerPrefix}/proxy`,
   frontendAssetsPublicPath: `${routerPrefix}/frontend/dist/`,
