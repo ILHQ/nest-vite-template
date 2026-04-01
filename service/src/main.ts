@@ -14,7 +14,7 @@ async function bootstrap() {
   const isDevelopment = process.env.NODE_ENV === 'development';
 
   // public 资源先走本地静态目录，未命中会继续流转到后面的 Vite 代理。
-  app.useStaticAssets(join(envConfig.paths.serviceSrcRoot, 'public'), {
+  app.useStaticAssets(envConfig.paths.servicePublicRoot, {
     prefix: `${envConfig.routerPrefix}/public/`,
   });
 
@@ -27,6 +27,18 @@ async function bootstrap() {
       if (proxyViteService.shouldProxyViteUpgradeRequest(req.url ?? '')) {
         viteDevProxy.upgrade(req, socket, head);
       }
+    });
+  }
+
+  // 生产环境挂载前端构建产物目录。
+  if (!isDevelopment) {
+    // 生产环境下将 frontend/dist/public 也映射到统一的 /public 前缀。
+    app.useStaticAssets(join(envConfig.paths.frontendDistRoot, 'public'), {
+      prefix: `${envConfig.routerPrefix}/public/`,
+    });
+
+    app.useStaticAssets(envConfig.paths.frontendDistRoot, {
+      prefix: envConfig.frontendAssetsPublicPath,
     });
   }
 

@@ -5,6 +5,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "build": "node ./build.ts",
     "dev": "concurrently -n service,frontend -c blue,green \"npm --prefix ./service run start:dev\" \"npm --prefix ./frontend run dev\"",
     "dev:frontend": "npm --prefix ./frontend run dev",
     "dev:service": "npm --prefix ./service run start:dev",
@@ -17,6 +18,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
+    "@types/node": "^25.5.0",
     "concurrently": "^9.2.1",
     "eslint": "^9.25.0",
     "eslint-config-prettier": "^10.1.5",
@@ -30,6 +32,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "lodash": "^4.17.23"
+    "lodash": "^4.17.23",
+    "shelljs": "^0.10.0"
   }
 }
