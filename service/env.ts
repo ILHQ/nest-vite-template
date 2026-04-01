@@ -23,6 +23,10 @@ type EnvConfig = {
   paths: RuntimePaths;
   servicePort: number;
   frontendPort: number;
+  logDir: string;
+  logLevel: string;
+  logFilePrefix: string;
+  logToConsole: boolean;
   routerPrefix: string;
   proxyPrefix: string;
   frontendAssetsPublicPath: string;
@@ -77,6 +81,25 @@ function parsePort(rawPort: string | undefined, fallbackPort: number): number {
   return Number.isInteger(parsedPort) && parsedPort > 0 ? parsedPort : fallbackPort;
 }
 
+// 将字符串布尔值转换为 boolean；非法值回退默认值。
+function parseBoolean(rawValue: string | undefined, fallbackValue: boolean): boolean {
+  if (!rawValue) {
+    return fallbackValue;
+  }
+
+  const normalizedValue = rawValue.toLowerCase();
+
+  if (['true', '1', 'yes', 'on'].includes(normalizedValue)) {
+    return true;
+  }
+
+  if (['false', '0', 'no', 'off'].includes(normalizedValue)) {
+    return false;
+  }
+
+  return fallbackValue;
+}
+
 // 解析容器环境变量中的 JSON 配置，非法 JSON 时忽略。
 function parseServiceEnvConfig(): Partial<EnvConfig> {
   const rawConfig = process.env.SERVICE_ENV_CONFIG;
@@ -102,6 +125,10 @@ function resolveEnvOverrides(baseConfig: EnvConfig): Partial<EnvConfig> {
   return {
     servicePort: parsePort(process.env.SERVICE_PORT, baseConfig.servicePort),
     frontendPort: parsePort(process.env.FRONTEND_PORT, baseConfig.frontendPort),
+    logDir: process.env.LOG_DIR ?? baseConfig.logDir,
+    logLevel: process.env.LOG_LEVEL ?? baseConfig.logLevel,
+    logFilePrefix: process.env.LOG_FILE_PREFIX ?? baseConfig.logFilePrefix,
+    logToConsole: parseBoolean(process.env.LOG_TO_CONSOLE, baseConfig.logToConsole),
     routerPrefix,
     proxyPrefix,
     frontendAssetsPublicPath,
@@ -118,6 +145,10 @@ const baseConfig: EnvConfig = {
   paths: runtimePaths,
   servicePort: 3000,
   frontendPort: 3100,
+  logDir: path.join(runtimePaths.serviceRoot, 'logs'),
+  logLevel: 'log',
+  logFilePrefix: 'service',
+  logToConsole: false,
   routerPrefix,
   proxyPrefix: `${routerPrefix}/proxy`,
   frontendAssetsPublicPath: `${routerPrefix}/frontend/dist/`,

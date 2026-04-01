@@ -171,6 +171,31 @@ CMD ["./start.sh"]
   fs.writeFileSync(dockerfilePath, dockerfileContent);
 }
 
+// 在根目录生成 docker-compose.yml，用于按固定镜像版本启动服务。
+function createDockerComposeFile(rootPkg, releaseVersion) {
+  const composePath = path.join(rootDir, 'docker-compose.yml');
+  const composeContent = `name: ${rootPkg.name}
+
+services:
+  service:
+    image: ${rootPkg.name}:${releaseVersion}
+    container_name: ${rootPkg.name}
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      SERVICE_PORT: "3000"
+      LOG_DIR: "/home/admin/source/out/service/logs"
+      LOG_LEVEL: "log"
+      LOG_FILE_PREFIX: "service"
+      LOG_TO_CONSOLE: "false"
+    volumes:
+      - "./docker-data/logs:/home/admin/source/out/service/logs"
+`;
+
+  fs.writeFileSync(composePath, composeContent);
+}
+
 // 执行 dockerBuild.ts，构建并导出镜像。
 function runDockerBuildScript() {
   const dockerBuildScriptPath = path.join(rootDir, 'dockerBuild.ts');
@@ -200,6 +225,7 @@ function main() {
   const archiveName = archiveOutDirectory(rootPkg, releaseVersion);
   removeOutDirectory();
   createDockerfile(archiveName);
+  createDockerComposeFile(rootPkg, releaseVersion);
   writeRootPackageJson(rootPkg, releaseVersion);
   runDockerBuildScript();
   shell.echo(`已完成打包，产物：${archiveName}`);

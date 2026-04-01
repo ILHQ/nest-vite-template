@@ -7,6 +7,12 @@ import { EventEmitter } from 'events';
 import { ProxyViteService } from './proxyVite/proxy.service';
 import process from 'process';
 import { networkInterfaces } from 'os';
+import type { NextFunction, Request, Response } from 'express';
+import { appLogger, createTraceId } from './logger/app-logger';
+
+type TraceableRequest = Request & {
+  traceId?: string;
+};
 
 // 获取所有可用的局域网 IPv4 地址。
 function getLanIPv4Addresses(): string[] {
@@ -24,9 +30,36 @@ function getLanIPv4Addresses(): string[] {
 
 // 初始化服务并挂载 Vite 开发代理。
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    logger: appLogger,
+  });
+  app.useLogger(appLogger);
   const proxyViteService = app.get(ProxyViteService);
   const isDevelopment = process.env.NODE_ENV === 'development';
+
+  // 记录统一的请求日志，包含 traceId、耗时与状态码。
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    const startAt = Date.now();
+    const traceId = createTraceId();
+    const traceableReq = req as TraceableRequest;
+    traceableReq.traceId = traceId;
+    res.setHeader('x-trace-id', traceId);
+
+    res.on('finish', () => {
+      appLogger.logHttpRequest({
+        traceId,
+        method: req.method,
+        path: req.originalUrl ?? req.url,
+        statusCode: res.statusCode,
+        durationMs: Date.now() - startAt,
+        ip: req.ip,
+        userAgent: req.headers['user-agent'] ?? '',
+        headers: req.headers,
+      });
+    });
+
+    next();
+  });
 
   // public 资源先走本地静态目录，未命中会继续流转到后面的 Vite 代理。
   app.useStaticAssets(envConfig.paths.servicePublicRoot, {
@@ -66,16 +99,20 @@ async function bootstrap() {
   await app.listen(servicePort);
 
   const entryUrl = `http://localhost:${servicePort}${envConfig.routerPrefix}`;
-  console.log(`[service] started at ${entryUrl}`);
+  const healthUrl = `http://localhost:${servicePort}/health`;
+  appLogger.log(`[service] started at ${entryUrl}`, 'Bootstrap');
+  appLogger.log(`[service] health check: ${healthUrl}`, 'Bootstrap');
 
   const lanAddresses = getLanIPv4Addresses();
   if (lanAddresses.length > 0) {
     for (const address of lanAddresses) {
       const lanEntryUrl = `http://${address}:${servicePort}${envConfig.routerPrefix}`;
-      console.log(`[service] lan started at ${lanEntryUrl}`);
+      const lanHealthUrl = `http://${address}:${servicePort}/health`;
+      appLogger.log(`[service] lan started at ${lanEntryUrl}`, 'Bootstrap');
+      appLogger.log(`[service] lan health check: ${lanHealthUrl}`, 'Bootstrap');
     }
   } else {
-    console.log('[service] 未检测到可用的局域网 IPv4 地址');
+    appLogger.warn('[service] 未检测到可用的局域网 IPv4 地址', 'Bootstrap');
   }
 }
 void bootstrap();
