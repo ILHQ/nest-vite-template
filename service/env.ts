@@ -30,6 +30,7 @@ type EnvConfig = {
   routerPrefix: string;
   proxyPrefix: string;
   frontendAssetsPublicPath: string;
+  proxyApi: string;
 };
 
 // 定位应用根目录，兼容仓库内运行与 out 包内运行。
@@ -149,9 +150,10 @@ const baseConfig: EnvConfig = {
   logLevel: 'log',
   logFilePrefix: 'service',
   logToConsole: false,
-  routerPrefix,
-  proxyPrefix: `${routerPrefix}/proxy`,
+  routerPrefix, // 路由前缀
+  proxyPrefix: `${routerPrefix}/proxy`, // 代理前缀
   frontendAssetsPublicPath: `${routerPrefix}/frontend/dist/`,
+  proxyApi: 'http://localhost:4000/test', // /api 代理地址
 };
 
 export default merge({}, baseConfig, resolveEnvOverrides(baseConfig), parseServiceEnvConfig());

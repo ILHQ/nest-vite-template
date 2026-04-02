@@ -15,6 +15,21 @@ export class ProxyViteService {
     return envConfig;
   }
 
+  // 代理/api
+  proxyApi(): typeof envConfig {
+    return createProxyMiddleware({
+      target: envConfig.proxyApi,
+      changeOrigin: true,
+      pathRewrite: { [`^${envConfig.proxyPrefix}`]: '/api' },
+      on: {
+        proxyRes: (proxyRes, req, res) => {
+          res.removeHeader('Content-Length');
+          res.setHeader('Transfer-Encoding', 'chunked');
+        },
+      },
+    });
+  }
+
   // 去掉 query，统一按路径做匹配判断。
   private normalizePath(pathname: string): string {
     return pathname.split('?')[0];

@@ -76,7 +76,7 @@ interface RequestInstance {
 }
 
 const DEFAULT_CONFIG = {
-  baseURL: '/api',
+  baseURL: __APP_PROXY_PREFIX__ + '/api',
   timeout: 60000, // 超时时间（毫秒）
 };
 

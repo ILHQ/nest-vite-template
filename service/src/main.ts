@@ -9,9 +9,11 @@ import process from 'process';
 import { networkInterfaces } from 'os';
 import type { NextFunction, Request, Response } from 'express';
 import { appLogger, createTraceId } from './logger/app-logger';
+import { normalizeRequestPath, shouldLogHttpRequest, shouldLogHttpError } from './logger/log-policy';
 
 type TraceableRequest = Request & {
   traceId?: string;
+  errorLogged?: boolean;
 };
 
 // 获取所有可用的局域网 IPv4 地址。
@@ -37,7 +39,7 @@ async function bootstrap() {
   const proxyViteService = app.get(ProxyViteService);
   const isDevelopment = process.env.NODE_ENV === 'development';
 
-  // 记录统一的请求日志，包含 traceId、耗时与状态码。
+  // 记录白名单接口访问日志，并兜底记录 5xx 错误日志。
   app.use((req: Request, res: Response, next: NextFunction) => {
     const startAt = Date.now();
     const traceId = createTraceId();
@@ -46,16 +48,29 @@ async function bootstrap() {
     res.setHeader('x-trace-id', traceId);
 
     res.on('finish', () => {
-      appLogger.logHttpRequest({
+      const requestPath = normalizeRequestPath(req.originalUrl ?? req.url);
+      const requestMetadata = {
         traceId,
         method: req.method,
-        path: req.originalUrl ?? req.url,
+        path: requestPath,
         statusCode: res.statusCode,
         durationMs: Date.now() - startAt,
         ip: req.ip,
         userAgent: req.headers['user-agent'] ?? '',
         headers: req.headers,
-      });
+      };
+
+      if (shouldLogHttpRequest(requestPath)) {
+        appLogger.logHttpRequest(requestMetadata);
+      }
+
+      if (shouldLogHttpError(res.statusCode) && !traceableReq.errorLogged) {
+        appLogger.logHttpException({
+          ...requestMetadata,
+          message: `HTTP_${res.statusCode}_RESPONSE`,
+          errorName: 'HttpErrorResponse',
+        });
+      }
     });
 
     next();

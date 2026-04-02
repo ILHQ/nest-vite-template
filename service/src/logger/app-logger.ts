@@ -88,19 +88,40 @@ function safeJsonStringify(input: unknown): string {
   }
 }
 
+function parseBooleanFlag(rawValue: string | undefined, fallbackValue: boolean): boolean {
+  if (!rawValue) {
+    return fallbackValue;
+  }
+
+  const normalizedValue = rawValue.toLowerCase();
+  if (['true', '1', 'yes', 'on'].includes(normalizedValue)) {
+    return true;
+  }
+  if (['false', '0', 'no', 'off'].includes(normalizedValue)) {
+    return false;
+  }
+  return fallbackValue;
+}
+
 class AppLogger implements LoggerService {
   private stream: WriteStream | null = null;
   private activeDate: string | null = null;
   private readonly minLevel: AppLogLevel;
   private readonly logDir: string;
   private readonly logFilePrefix: string;
+  private readonly logToFile: boolean;
   private readonly logToConsole: boolean;
 
   constructor() {
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const defaultLogToFile = !isDevelopment;
+    const defaultLogToConsole = isDevelopment ? true : envConfig.logToConsole;
+
     this.minLevel = normalizeLogLevel(envConfig.logLevel);
     this.logDir = path.resolve(envConfig.logDir);
     this.logFilePrefix = envConfig.logFilePrefix;
-    this.logToConsole = envConfig.logToConsole;
+    this.logToFile = parseBooleanFlag(process.env.LOG_TO_FILE, defaultLogToFile);
+    this.logToConsole = parseBooleanFlag(process.env.LOG_TO_CONSOLE, defaultLogToConsole);
   }
 
   log(message: unknown, context?: string): void {
@@ -153,7 +174,9 @@ class AppLogger implements LoggerService {
     });
 
     const line = `${safeJsonStringify(payload)}\n`;
-    this.writeToFile(line);
+    if (this.logToFile) {
+      this.writeToFile(line);
+    }
 
     if (this.logToConsole) {
       process.stdout.write(line);

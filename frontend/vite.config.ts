@@ -7,6 +7,7 @@ import envConfig from '../service/env';
 const routerBasename =
   envConfig.routerPrefix === '/' ? '/' : envConfig.routerPrefix.replace(/\/$/, '');
 
+// 复制 public 目录到 dist/public 目录
 function copyPublicToDistPublicPlugin() {
   return {
     name: 'copy-public-to-dist-public',
@@ -33,6 +34,7 @@ export default defineConfig(({ command }) => {
     base,
     define: {
       __APP_ROUTER_BASENAME__: JSON.stringify(routerBasename),
+      __APP_PROXY_PREFIX__: JSON.stringify(envConfig.proxyPrefix),
     },
     plugins: [react(), copyPublicToDistPublicPlugin()],
     resolve: {

@@ -1,8 +1,13 @@
 import './index.less';
 import reactImg from '@/assets/react.svg';
 import { getPublicPath } from '@/tools/utils';
+import { getHealth } from '@/api/common';
+import { useEffect } from 'react';
 
 const Home = () => {
+  useEffect(() => {
+    getHealth();
+  });
   return (
     <div>
       <img width={200} height={200} src={reactImg} alt="" />

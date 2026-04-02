@@ -32,11 +32,14 @@ export class ProxyViteController {
     return this.proxyViteService.getHealth();
   }
 
-  // 接口代理前缀占位，后续可在此挂具体 API 代理逻辑。
-  @All(`${envConfig.proxyPrefix}/*path`)
-  proxyApiPlaceholder(@Req() _req: Request, @Res() res: Response): void {
-    res.status(501).json({
-      message: `请在 ${envConfig.proxyPrefix} 下实现具体接口代理`,
+  // 接口代理/api前缀
+  @All(`${envConfig.proxyPrefix}/api/*path`)
+  proxyApi(@Req() req: Request, @Res() res: Response): void {
+    const proxy = this.proxyViteService.proxyApi();
+    proxy(req, res, (result) => {
+      if (result instanceof Error) {
+        throw result;
+      }
     });
   }
 
