@@ -57,7 +57,7 @@ export class ProxyViteController {
 
       return {
         title: envConfig.pkg.description ?? 'Frontend',
-        faviconPath: `${envConfig.frontendAssetsPublicPath}public/vite.svg`,
+        faviconPath: `${envConfig.routerPrefix}/public/logo.png`,
         cssFiles: (entry.css ?? []).map(
           (cssFile) => `${envConfig.frontendAssetsPublicPath}${cssFile}`,
         ),
@@ -67,7 +67,7 @@ export class ProxyViteController {
 
     return {
       title: envConfig.pkg.description ?? 'Frontend',
-      faviconPath: `${envConfig.routerPrefix}/vite.svg`,
+      faviconPath: `${envConfig.routerPrefix}/public/logo.png`,
       cssFiles: [],
       reactRefreshPreamblePath: `${envConfig.routerPrefix}/@react-refresh`,
       viteClientScript: `${envConfig.routerPrefix}/@vite/client`,

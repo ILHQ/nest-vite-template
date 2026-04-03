@@ -83,6 +83,11 @@ async function bootstrap() {
 
   // 仅在开发环境挂载 Vite 代理与 HMR WebSocket 转发。
   if (isDevelopment) {
+    // 开发环境下，public 资源未命中 service/public 时回退到 frontend/public。
+    app.useStaticAssets(join(envConfig.paths.repoRoot, 'frontend', 'public'), {
+      prefix: `${envConfig.routerPrefix}/public/`,
+    });
+
     const viteDevProxy = proxyViteService.createViteDevProxy();
     app.use(viteDevProxy);
 
