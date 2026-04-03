@@ -2,11 +2,12 @@
   "name": "nest-vite-template",
   "description": "全栈模板",
   "private": true,
-  "version": "1.0.13",
+  "version": "1.0.18",
   "main": "index.js",
   "scripts": {
     "dev": "concurrently -n service,frontend -c blue,green \"npm --prefix ./service run start:dev\" \"npm --prefix ./frontend run dev\"",
     "build": "node ./build.ts",
+    "buildDocker": "node ./dockerBuild.ts",
     "install:all": "pnpm install && pnpm -C ./service install && pnpm -C ./frontend install",
     "dev:frontend": "npm --prefix ./frontend run dev",
     "dev:service": "npm --prefix ./service run start:dev",
