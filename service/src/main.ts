@@ -120,19 +120,19 @@ async function bootstrap() {
 
   const entryUrl = `http://localhost:${servicePort}${envConfig.routerPrefix}`;
   const healthUrl = `http://localhost:${servicePort}/health`;
-  appLogger.log(`[service] started at ${entryUrl}`, 'Bootstrap');
-  appLogger.log(`[service] health check: ${healthUrl}`, 'Bootstrap');
+  appLogger.logStartup(`[service] started at ${entryUrl}`);
+  appLogger.logStartup(`[service] health check: ${healthUrl}`);
 
   const lanAddresses = getLanIPv4Addresses();
   if (lanAddresses.length > 0) {
     for (const address of lanAddresses) {
       const lanEntryUrl = `http://${address}:${servicePort}${envConfig.routerPrefix}`;
       const lanHealthUrl = `http://${address}:${servicePort}/health`;
-      appLogger.log(`[service] lan started at ${lanEntryUrl}`, 'Bootstrap');
-      appLogger.log(`[service] lan health check: ${lanHealthUrl}`, 'Bootstrap');
+      appLogger.logStartup(`[service] lan started at ${lanEntryUrl}`);
+      appLogger.logStartup(`[service] lan health check: ${lanHealthUrl}`);
     }
   } else {
-    appLogger.warn('[service] 未检测到可用的局域网 IPv4 地址', 'Bootstrap');
+    appLogger.warnStartup('[service] 未检测到可用的局域网 IPv4 地址');
   }
 }
 void bootstrap();

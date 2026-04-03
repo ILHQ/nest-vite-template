@@ -8,6 +8,9 @@ import envConfig from '../../env';
 type AppLogLevel = 'fatal' | 'error' | 'warn' | 'log' | 'debug' | 'verbose';
 
 type LogMetadata = Record<string, unknown>;
+type WriteOptions = {
+  forceConsole?: boolean;
+};
 
 const SENSITIVE_KEYWORDS = ['authorization', 'cookie', 'token', 'password', 'set-cookie'];
 
@@ -150,6 +153,16 @@ class AppLogger implements LoggerService {
     this.write('fatal', normalizeMessage(message), { context });
   }
 
+  // 启动阶段日志在生产环境也输出到控制台，便于快速定位服务状态。
+  logStartup(message: unknown, context = 'Bootstrap'): void {
+    this.write('log', normalizeMessage(message), { context }, { forceConsole: true });
+  }
+
+  // 启动阶段告警在生产环境也输出到控制台。
+  warnStartup(message: unknown, context = 'Bootstrap'): void {
+    this.write('warn', normalizeMessage(message), { context }, { forceConsole: true });
+  }
+
   // 统一记录 HTTP 请求日志。
   logHttpRequest(metadata: LogMetadata): void {
     this.write('log', 'HTTP_REQUEST', metadata);
@@ -160,7 +173,12 @@ class AppLogger implements LoggerService {
     this.write('error', 'HTTP_EXCEPTION', metadata);
   }
 
-  private write(level: AppLogLevel, message: string, metadata: LogMetadata): void {
+  private write(
+    level: AppLogLevel,
+    message: string,
+    metadata: LogMetadata,
+    options: WriteOptions = {},
+  ): void {
     if (!this.shouldWrite(level)) {
       return;
     }
@@ -178,7 +196,7 @@ class AppLogger implements LoggerService {
       this.writeToFile(line);
     }
 
-    if (this.logToConsole) {
+    if (this.logToConsole || options.forceConsole) {
       process.stdout.write(line);
     }
   }
