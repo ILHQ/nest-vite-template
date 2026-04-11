@@ -11,7 +11,7 @@ const Home = () => {
   return (
     <div>
       <img width={200} height={200} src={reactImg} alt="" />
-      <img width={200} height={200} src={getPublicPath('vite.svg')} alt="" />
+      <img width={200} height={200} src={getPublicPath('logo.png')} alt="" />
       <img width={200} height={200} src={getPublicPath('Turret10.png')} alt="" />
       home
     </div>

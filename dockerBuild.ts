@@ -7,9 +7,24 @@ const packageJsonPath = path.join(rootDir, 'package.json');
 const dockerfilePath = path.join(rootDir, 'Dockerfile');
 const defaultBaseImage = 'node:22-slim';
 
-// 读取根目录 package.json，获取镜像名称和版本。
+// 读取根目录 package.json，获取镜像名称等基础信息。
 function readRootPackageJson() {
   return JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+}
+
+function padTimeUnit(value) {
+  return String(value).padStart(2, '0');
+}
+
+// 生成发布时间后缀，格式为 YYYY-MM-DD_HH-mm-ss。
+function createReleaseSuffix(date = new Date()) {
+  const year = date.getFullYear();
+  const month = padTimeUnit(date.getMonth() + 1);
+  const day = padTimeUnit(date.getDate());
+  const hour = padTimeUnit(date.getHours());
+  const minute = padTimeUnit(date.getMinutes());
+  const second = padTimeUnit(date.getSeconds());
+  return `${year}-${month}-${day}_${hour}-${minute}-${second}`;
 }
 
 // 确保基础镜像可用：本地不存在时自动拉取网络镜像。
@@ -79,8 +94,9 @@ function main() {
   }
 
   const pkg = readRootPackageJson();
-  const imageTag = `${pkg.name}:${pkg.version}`;
-  const imageTarGzPath = path.join(rootDir, `docker_${pkg.name}_${pkg.version}.tar.gz`);
+  const releaseSuffix = process.argv[2] || createReleaseSuffix();
+  const imageTag = `${pkg.name}:${releaseSuffix}`;
+  const imageTarGzPath = path.join(rootDir, `docker_${pkg.name}_${releaseSuffix}.tar.gz`);
   const baseImage = process.env.BASE_IMAGE || defaultBaseImage;
 
   ensureBaseImageReady(baseImage);

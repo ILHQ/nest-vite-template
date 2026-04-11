@@ -81,32 +81,25 @@ function readRootPackageJson() {
   return JSON.parse(fs.readFileSync(rootPackagePath, 'utf-8'));
 }
 
-// 仅递增 patch 版本号（+0.0.1），保持前两位不变。
-function increasePatchVersion(version) {
-  const match = version.match(/^(\d+)\.(\d+)\.(\d+)(.*)$/);
-
-  if (!match) {
-    return version;
-  }
-
-  const major = Number(match[1]);
-  const minor = Number(match[2]);
-  const patch = Number(match[3]) + 1;
-  const suffix = match[4] ?? '';
-  return `${major}.${minor}.${patch}${suffix}`;
+function padTimeUnit(value) {
+  return String(value).padStart(2, '0');
 }
 
-// 写入 out/package.json，version 自动 +0.0.1。
-function writeOutPackageJson(rootPkg, releaseVersion) {
+// 生成发布时间后缀，格式为 YYYY-MM-DD_HH-mm-ss。
+function createReleaseSuffix(date = new Date()) {
+  const year = date.getFullYear();
+  const month = padTimeUnit(date.getMonth() + 1);
+  const day = padTimeUnit(date.getDate());
+  const hour = padTimeUnit(date.getHours());
+  const minute = padTimeUnit(date.getMinutes());
+  const second = padTimeUnit(date.getSeconds());
+  return `${year}-${month}-${day}_${hour}-${minute}-${second}`;
+}
+
+// 写入 out/package.json，保持根目录 package.json 原始内容。
+function writeOutPackageJson(rootPkg) {
   const outPkgPath = path.join(outDir, 'package.json');
-  const outPkg = { ...rootPkg, version: releaseVersion };
-  fs.writeFileSync(outPkgPath, `${JSON.stringify(outPkg, null, 2)}\n`);
-}
-
-// 回写根目录 package.json，保持版本与打包产物一致。
-function writeRootPackageJson(rootPkg, releaseVersion) {
-  const nextRootPkg = { ...rootPkg, version: releaseVersion };
-  fs.writeFileSync(rootPackagePath, `${JSON.stringify(nextRootPkg, null, 2)}\n`);
+  fs.writeFileSync(outPkgPath, `${JSON.stringify(rootPkg, null, 2)}\n`);
 }
 
 // 在 out/bin 下生成生产启动脚本。
@@ -122,9 +115,9 @@ npm run start:prod
   shell.chmod('+x', scriptPath);
 }
 
-// 打包 out 为 tar.gz，命名为 root package 的 name_version。
-function archiveOutDirectory(rootPkg, releaseVersion) {
-  const archiveName = `${rootPkg.name}_${releaseVersion}.tar.gz`;
+// 打包 out 为 tar.gz，命名为 root package 的 name_时间后缀。
+function archiveOutDirectory(rootPkg, releaseSuffix) {
+  const archiveName = `${rootPkg.name}_${releaseSuffix}.tar.gz`;
   const archivePath = path.join(rootDir, archiveName);
   shell.rm('-f', archivePath);
 
@@ -171,14 +164,14 @@ CMD ["./start.sh"]
   fs.writeFileSync(dockerfilePath, dockerfileContent);
 }
 
-// 在根目录生成 docker-compose.yml，用于按固定镜像版本启动服务。
-function createDockerComposeFile(rootPkg, releaseVersion) {
+// 在根目录生成 docker-compose.yml，用于按固定镜像标签启动服务。
+function createDockerComposeFile(rootPkg, releaseSuffix) {
   const composePath = path.join(rootDir, 'docker-compose.yml');
   const composeContent = `name: ${rootPkg.name}
 
 services:
   service:
-    image: ${rootPkg.name}:${releaseVersion}
+    image: ${rootPkg.name}:${releaseSuffix}
     container_name: ${rootPkg.name}
     restart: unless-stopped
     ports:
@@ -197,7 +190,7 @@ services:
 }
 
 // 执行 dockerBuild.ts，构建并导出镜像。
-function runDockerBuildScript() {
+function runDockerBuildScript(releaseSuffix) {
   const dockerBuildScriptPath = path.join(rootDir, 'dockerBuild.ts');
 
   if (!shell.test('-f', dockerBuildScriptPath)) {
@@ -205,7 +198,7 @@ function runDockerBuildScript() {
     return;
   }
 
-  const result = shell.exec('node "./dockerBuild.ts"', { cwd: rootDir });
+  const result = shell.exec(`node "./dockerBuild.ts" "${releaseSuffix}"`, { cwd: rootDir });
   if (result.code !== 0) {
     shell.exit(result.code);
   }
@@ -213,21 +206,20 @@ function runDockerBuildScript() {
 
 function main() {
   const rootPkg = readRootPackageJson();
-  const releaseVersion = increasePatchVersion(rootPkg.version ?? '0.0.0');
+  const releaseSuffix = createReleaseSuffix();
   buildFrontend();
   buildService();
   cleanOutDir();
   copyDistToOut();
   copyServiceFilesToOut();
   copyServiceDistToOut();
-  writeOutPackageJson(rootPkg, releaseVersion);
+  writeOutPackageJson(rootPkg);
   createOutStartScript();
-  const archiveName = archiveOutDirectory(rootPkg, releaseVersion);
+  const archiveName = archiveOutDirectory(rootPkg, releaseSuffix);
   removeOutDirectory();
   createDockerfile(archiveName);
-  createDockerComposeFile(rootPkg, releaseVersion);
-  writeRootPackageJson(rootPkg, releaseVersion);
-  runDockerBuildScript();
+  createDockerComposeFile(rootPkg, releaseSuffix);
+  runDockerBuildScript(releaseSuffix);
   shell.echo(`已完成打包，产物：${archiveName}`);
 }
 
