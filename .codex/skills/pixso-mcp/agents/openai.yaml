@@ -1,0 +1,6 @@
+interface:
+  display_name: "Pixso MCP"
+  short_description: "Pixso 链接或设计稿转 React/Antd/Less 页面"
+  default_prompt: "Use $pixso-mcp 基于 Pixso MCP 还原当前设计稿并按仓库约束实现页面。"
+policy:
+  allow_implicit_invocation: true
