@@ -1,0 +1,6 @@
+interface:
+  display_name: "Web Style"
+  short_description: "前端页面样式、Less、Antd 主题与布局实现规范"
+  default_prompt: "Use $web-style 按当前仓库样式规范实现页面布局、Less 样式或 Antd 主题调整。"
+policy:
+  allow_implicit_invocation: true
