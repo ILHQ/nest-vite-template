@@ -9,7 +9,13 @@ import process from 'process';
 import { networkInterfaces } from 'os';
 import type { NextFunction, Request, Response } from 'express';
 import { appLogger, createTraceId } from './logger/app-logger';
-import { normalizeRequestPath, shouldLogHttpRequest, shouldLogHttpError } from './logger/log-policy';
+import {
+  normalizeRequestPath,
+  shouldLogHttpRequest,
+  shouldLogHttpError,
+} from './logger/log-policy';
+import { AllExceptionsFilter } from './http-exception.filter';
+import { HttpResponseInterceptor } from './http-response.interceptor';
 
 type TraceableRequest = Request & {
   traceId?: string;
@@ -36,6 +42,8 @@ async function bootstrap() {
     logger: appLogger,
   });
   app.useLogger(appLogger);
+  app.useGlobalFilters(new AllExceptionsFilter());
+  app.useGlobalInterceptors(new HttpResponseInterceptor());
   const proxyViteService = app.get(ProxyViteService);
   const isDevelopment = process.env.NODE_ENV === 'development';
 

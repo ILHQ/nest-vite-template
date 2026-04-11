@@ -46,14 +46,6 @@ export default defineConfig(({ command }) => {
       outDir: path.resolve(__dirname, './dist'),
       emptyOutDir: true,
       manifest: 'manifest.json',
-      rollupOptions: {
-        output: {
-          manualChunks: {
-            vendor: ['react', 'react-dom', 'react-router-dom', 'antd'],
-            // 其他依赖可以继续添加
-          },
-        },
-      },
     },
     css: {
       postcss: path.resolve(__dirname, 'postcss.config.js'),

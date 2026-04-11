@@ -1,4 +1,4 @@
-import request from '@/request';
+import request, { type StandardResponse } from '@/request';
 
-// 健康检查
-export const getHealth = () => request.get('/health');
+// 测试接口
+export const getTest = () => request.get<StandardResponse<{ message: string }>>('/business/test');

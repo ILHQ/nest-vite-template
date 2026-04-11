@@ -2,7 +2,7 @@
   "name": "nest-vite-template",
   "description": "全栈模板",
   "private": true,
-  "version": "1.0.20",
+  "version": "1.0.0",
   "main": "index.js",
   "scripts": {
     "dev": "concurrently -n service,frontend -c blue,green \"npm --prefix ./service run start:dev\" \"npm --prefix ./frontend run dev\"",

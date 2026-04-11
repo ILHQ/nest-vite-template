@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
-import { ProxyViteModule } from './proxyVite/proxy.modules';
+import { ProxyViteModules } from './proxyVite/proxy.modules';
+import { BusinessModules } from './business/business.modules';
 
 @Module({
-  imports: [ProxyViteModule],
+  imports: [BusinessModules, ProxyViteModules],
   controllers: [],
   providers: [],
 })

@@ -2,43 +2,51 @@ import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from
 import { Request, Response } from 'express';
 import { appLogger } from './logger/app-logger';
 import { shouldLogHttpError } from './logger/log-policy';
+import { createErrorResponse, shouldUseStandardResponse } from './http-response';
 
 type TraceableRequest = Request & {
   traceId?: string;
   errorLogged?: boolean;
 };
 
+// 全局异常过滤器：记录异常日志，并将失败响应统一为标准报文。
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response: Response = ctx.getResponse<Response>();
     const request: TraceableRequest = ctx.getRequest<TraceableRequest>();
+    const requestPath = request.originalUrl ?? request.url;
     const status: number =
       exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
-    const messageResponse: string =
-      exception instanceof HttpException ? exception.message : '系统错误';
     const traceId = request.traceId ?? response.getHeader('x-trace-id');
     const shouldLogAsError = shouldLogHttpError(status);
+    const errorResponse = createErrorResponse(status, exception);
 
     if (shouldLogAsError) {
       appLogger.logHttpException({
         traceId,
         method: request.method,
-        path: request.originalUrl ?? request.url,
+        path: requestPath,
         statusCode: status,
-        message: messageResponse,
+        message: errorResponse.errorDesc,
         errorName: exception instanceof Error ? exception.name : 'UnknownError',
         stack: exception instanceof Error ? exception.stack : undefined,
       });
       request.errorLogged = true;
     }
 
-    response.status(status).json({
-      statusCode: status,
-      message: messageResponse,
-      path: request.url,
-      timestamp: new Date().toISOString(),
-    });
+    // 非项目标准接口仍保持原有异常结构，避免影响 HTML 页面与代理透传。
+    if (!shouldUseStandardResponse(requestPath)) {
+      response.status(status).json({
+        statusCode: status,
+        message: errorResponse.errorDesc,
+        path: request.url,
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    response.status(status).json(errorResponse);
   }
 }

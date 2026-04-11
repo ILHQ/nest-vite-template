@@ -1,7 +1,6 @@
-import { Controller, Get, UseFilters, Redirect, Render, All, Req, Res } from '@nestjs/common';
+import { Controller, Get, Redirect, Render, All, Req, Res } from '@nestjs/common';
 import { ProxyViteService } from './proxy.service';
 import type { Request, Response } from 'express';
-import { AllExceptionsFilter } from '../http-exception.filter';
 import envConfig from '../../env';
 import process from 'process';
 import path from 'node:path';
@@ -17,7 +16,6 @@ type ViteManifestEntry = {
 type ViteManifest = Record<string, ViteManifestEntry>;
 
 @Controller()
-@UseFilters(AllExceptionsFilter)
 export class ProxyViteController {
   constructor(private readonly proxyViteService: ProxyViteService) {}
 

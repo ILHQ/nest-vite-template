@@ -151,7 +151,7 @@ const baseConfig: EnvConfig = {
   logFilePrefix: 'service',
   logToConsole: false,
   routerPrefix, // 路由前缀
-  proxyPrefix: `${routerPrefix}/proxy`, // 代理前缀
+  proxyPrefix: `${routerPrefix}/proxy`, // 代理前缀 该前缀表明是从前端进入 再根据路径进行分发
   frontendAssetsPublicPath: `${routerPrefix}/frontend/dist/`,
   proxyApi: 'http://localhost:4000/test', // /api 代理地址
 };

@@ -32,6 +32,15 @@ interface ResponsePayload<T = unknown> {
   response: Response;
 }
 
+export interface StandardResponse<T = unknown> {
+  data: T | null;
+  errorCode: string | null;
+  errorDesc: string | null;
+  errorType: string | null;
+  exceptionType: string | null;
+  success: boolean;
+}
+
 interface InterceptorHandler<T> {
   fulfilled: (value: T) => T | Promise<T>;
   rejected?: (error: unknown) => unknown;
@@ -76,11 +85,54 @@ interface RequestInstance {
 }
 
 const DEFAULT_CONFIG = {
-  baseURL: __APP_PROXY_PREFIX__ + '/api',
+  baseURL: __APP_PROXY_PREFIX__,
   timeout: 60000, // 超时时间（毫秒）
 };
 
 const isAbsoluteUrl = (url: string) => /^https?:\/\//i.test(url);
+
+const LOGIN_ERROR_CODES = ['110', 'account_not_login', 'account_login_expire'];
+
+function isStandardResponse<T = unknown>(value: unknown): value is StandardResponse<T> {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  return (
+    'data' in candidate &&
+    'errorCode' in candidate &&
+    'errorDesc' in candidate &&
+    'errorType' in candidate &&
+    'exceptionType' in candidate &&
+    'success' in candidate
+  );
+}
+
+function handleStandardResponseError(response: StandardResponse<unknown>): StandardResponse<unknown> {
+  const errorDesc = response.errorDesc || '请求失败';
+  message.error(errorDesc);
+
+  if (response.errorCode && LOGIN_ERROR_CODES.includes(response.errorCode)) {
+    localStorage.clear();
+    location.href = '/login';
+  }
+
+  return response;
+}
+
+function extractStandardResponseFromError(error: unknown): StandardResponse<unknown> | null {
+  if (!error || typeof error !== 'object') {
+    return null;
+  }
+
+  if (isStandardResponse(error)) {
+    return error;
+  }
+
+  const payload = error as ResponsePayload<unknown>;
+  return isStandardResponse(payload.data) ? payload.data : null;
+}
 
 // 将 params 序列化为 query string，支持数组
 const stringifyQueryParams = (params?: Record<string, QueryValue>) => {
@@ -277,29 +329,31 @@ request.interceptors.request.use(
 
 // 响应拦截器
 request.interceptors.response.use(
-  (response: any) => {
+  (response: ResponsePayload<unknown>) => {
     if (response?.config?.needCheckSuccess) {
       return response.data;
     }
-    if (response?.data?.success) {
+
+    if (!isStandardResponse(response.data)) {
       return response.data;
-    } else {
-      message.error(response?.data?.errorDesc);
-      if (
-        ['110', 'account_not_login', 'account_login_expire'].includes(response?.data?.errorCode)
-      ) {
-        localStorage.clear();
-        location.href = '/login';
-      }
-      return Promise.reject(response?.data?.errorDesc);
     }
+
+    if (response.data.success) {
+      return response.data;
+    }
+
+    return Promise.reject(handleStandardResponseError(response.data));
   },
   (error) => {
-    // 可以统一提示错误
+    const standardResponse = extractStandardResponseFromError(error);
+
+    if (standardResponse) {
+      return Promise.reject(handleStandardResponseError(standardResponse));
+    }
+
+    const errorDesc = error instanceof Error ? error.message : '请求出错';
+    message.error(errorDesc);
     console.error('请求出错：', error);
-    // if (error.response) {
-    //   const { status } = error.response;
-    // }
     return Promise.reject(error);
   },
 );

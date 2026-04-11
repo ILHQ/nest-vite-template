@@ -1,12 +1,12 @@
 import './index.less';
 import reactImg from '@/assets/react.svg';
 import { getPublicPath } from '@/tools/utils';
-import { getHealth } from '@/api/common';
+import { getTest } from '@/api/common';
 import { useEffect } from 'react';
 
 const Home = () => {
   useEffect(() => {
-    getHealth();
+    getTest().then((res) => console.log(res));
   });
   return (
     <div>

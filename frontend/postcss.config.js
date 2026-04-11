@@ -23,7 +23,6 @@ export default {
     //     return file.indexOf('/src/pages/') < 0;
     //   },
     // },
-    tailwindcss: {},
     autoprefixer: {},
   },
 };

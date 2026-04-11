@@ -6,4 +6,4 @@ import { ProxyViteController } from './proxy.controller';
   providers: [ProxyViteService],
   controllers: [ProxyViteController],
 })
-export class ProxyViteModule {}
+export class ProxyViteModules {}
