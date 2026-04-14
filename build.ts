@@ -5,7 +5,8 @@ const shell = require('shelljs');
 const rootDir = __dirname;
 const frontendDir = path.join(rootDir, 'frontend');
 const serviceDir = path.join(rootDir, 'service');
-const outDir = path.join(rootDir, 'out');
+const distRootDir = path.join(rootDir, 'dist');
+const outDir = path.join(distRootDir, 'out');
 const outFrontendDir = path.join(outDir, 'frontend');
 const outServiceDir = path.join(outDir, 'service');
 const outBinDir = path.join(outDir, 'bin');
@@ -27,27 +28,28 @@ function buildService() {
   }
 }
 
-// 删除根目录 out 文件夹。
-function cleanOutDir() {
-  shell.rm('-rf', outDir);
+// 删除根目录 dist 文件夹，并重新创建。
+function cleanDistDir() {
+  shell.rm('-rf', distRootDir);
+  shell.mkdir('-p', distRootDir);
 }
 
-// 复制 dist 到根目录 out/frontend。
+// 复制 dist 到根目录 dist/out/frontend。
 function copyDistToOut() {
   const distCandidates = [path.join(frontendDir, 'dist'), path.join(rootDir, 'assets', 'dist')];
-  const distDir = distCandidates.find((candidate) => shell.test('-d', candidate));
+  const frontendDistDir = distCandidates.find((candidate) => shell.test('-d', candidate));
 
-  if (!distDir) {
+  if (!frontendDistDir) {
     shell.echo('未找到 dist 目录，请确认 frontend 构建输出路径。');
     shell.exit(1);
     return;
   }
 
   shell.mkdir('-p', outFrontendDir);
-  shell.cp('-R', path.join(distDir, '.'), outFrontendDir);
+  shell.cp('-R', path.join(frontendDistDir, '.'), outFrontendDir);
 }
 
-// 复制 service 下除 dist 外的文件到 out/service 目录。
+// 复制 service 下除 dist 外的文件到 dist/out/service 目录。
 function copyServiceFilesToOut() {
   const entries = shell.ls('-A', serviceDir);
   const excludedEntries = new Set(['dist', 'node_modules', '.DS_Store']);
@@ -62,7 +64,7 @@ function copyServiceFilesToOut() {
   }
 }
 
-// 复制 service/dist 到 out/service/dist，供 start:prod 运行。
+// 复制 service/dist 到 dist/out/service/dist，供 start:prod 运行。
 function copyServiceDistToOut() {
   const serviceDistDir = path.join(serviceDir, 'dist');
 
@@ -96,13 +98,13 @@ function createReleaseSuffix(date = new Date()) {
   return `${year}-${month}-${day}_${hour}-${minute}-${second}`;
 }
 
-// 写入 out/package.json，保持根目录 package.json 原始内容。
+// 写入 dist/out/package.json，保持根目录 package.json 原始内容。
 function writeOutPackageJson(rootPkg) {
   const outPkgPath = path.join(outDir, 'package.json');
   fs.writeFileSync(outPkgPath, `${JSON.stringify(rootPkg, null, 2)}\n`);
 }
 
-// 在 out/bin 下生成生产启动脚本。
+// 在 dist/out/bin 下生成生产启动脚本。
 function createOutStartScript() {
   shell.mkdir('-p', outBinDir);
   const scriptPath = path.join(outBinDir, 'start.sh');
@@ -115,13 +117,13 @@ npm run start:prod
   shell.chmod('+x', scriptPath);
 }
 
-// 打包 out 为 tar.gz，命名为 root package 的 name_时间后缀。
+// 在 dist 目录下打包 out 为 tar.gz，命名为 root package 的 name_时间后缀。
 function archiveOutDirectory(rootPkg, releaseSuffix) {
   const archiveName = `${rootPkg.name}_${releaseSuffix}.tar.gz`;
-  const archivePath = path.join(rootDir, archiveName);
+  const archivePath = path.join(distRootDir, archiveName);
   shell.rm('-f', archivePath);
 
-  const result = shell.exec(`tar -czf "${archivePath}" "out"`, { cwd: rootDir });
+  const result = shell.exec(`tar -czf "${archivePath}" "out"`, { cwd: distRootDir });
   if (result.code !== 0) {
     shell.exit(result.code);
   }
@@ -129,14 +131,14 @@ function archiveOutDirectory(rootPkg, releaseSuffix) {
   return archiveName;
 }
 
-// 删除 out 目录，只保留打包后的压缩包。
+// 打包完成后删除 dist/out，只保留归档与其他产物。
 function removeOutDirectory() {
   shell.rm('-rf', outDir);
 }
 
-// 在根目录生成 Dockerfile，用于解压 tar.gz 并启动服务。
+// 在 dist 目录生成 Dockerfile，用于解压 tar.gz 并启动服务。
 function createDockerfile(archiveName) {
-  const dockerfilePath = path.join(rootDir, 'Dockerfile');
+  const dockerfilePath = path.join(distRootDir, 'Dockerfile');
   const dockerfileContent = `FROM node:22-slim
 
 ENV ARRANGE_PATH=/home/admin/source
@@ -164,9 +166,9 @@ CMD ["./start.sh"]
   fs.writeFileSync(dockerfilePath, dockerfileContent);
 }
 
-// 在根目录生成 docker-compose.yml，用于按固定镜像标签启动服务。
+// 在 dist 目录生成 docker-compose.yml，用于按固定镜像标签启动服务。
 function createDockerComposeFile(rootPkg, releaseSuffix) {
-  const composePath = path.join(rootDir, 'docker-compose.yml');
+  const composePath = path.join(distRootDir, 'docker-compose.yml');
   const composeContent = `name: ${rootPkg.name}
 
 services:
@@ -207,9 +209,9 @@ function runDockerBuildScript(releaseSuffix) {
 function main() {
   const rootPkg = readRootPackageJson();
   const releaseSuffix = createReleaseSuffix();
+  cleanDistDir();
   buildFrontend();
   buildService();
-  cleanOutDir();
   copyDistToOut();
   copyServiceFilesToOut();
   copyServiceDistToOut();
@@ -220,7 +222,7 @@ function main() {
   createDockerfile(archiveName);
   createDockerComposeFile(rootPkg, releaseSuffix);
   runDockerBuildScript(releaseSuffix);
-  shell.echo(`已完成打包，产物：${archiveName}`);
+  shell.echo(`已完成打包，产物目录：${distRootDir}`);
 }
 
 main();

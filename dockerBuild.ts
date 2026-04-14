@@ -3,8 +3,9 @@ const fs = require('node:fs');
 const shell = require('shelljs');
 
 const rootDir = __dirname;
+const distRootDir = path.join(rootDir, 'dist');
 const packageJsonPath = path.join(rootDir, 'package.json');
-const dockerfilePath = path.join(rootDir, 'Dockerfile');
+const dockerfilePath = path.join(distRootDir, 'Dockerfile');
 const defaultBaseImage = 'node:22-slim';
 
 // 读取根目录 package.json，获取镜像名称等基础信息。
@@ -62,10 +63,10 @@ function ensureBaseImageReady(baseImage) {
   shell.echo(`基础镜像拉取完成：${baseImage}`);
 }
 
-// 基于根目录 Dockerfile 构建 linux/amd64 镜像。
+// 基于 dist/Dockerfile 构建 linux/amd64 镜像。
 function buildDockerImage(imageTag, baseImage) {
   const result = shell.exec(
-    `docker build --platform linux/amd64 --pull=false --build-arg BASE_IMAGE="${baseImage}" -t "${imageTag}" -f "${dockerfilePath}" "${rootDir}"`,
+    `docker build --platform linux/amd64 --pull=false --build-arg BASE_IMAGE="${baseImage}" -t "${imageTag}" -f "${dockerfilePath}" "${distRootDir}"`,
     {
       cwd: rootDir,
     }
@@ -88,7 +89,7 @@ function saveDockerImage(imageTag, tarGzPath) {
 
 function main() {
   if (!shell.test('-f', dockerfilePath)) {
-    shell.echo('未找到根目录 Dockerfile，请先执行构建脚本生成 Dockerfile。');
+    shell.echo('未找到 dist/Dockerfile，请先执行构建脚本生成 Dockerfile。');
     shell.exit(1);
     return;
   }
@@ -96,7 +97,7 @@ function main() {
   const pkg = readRootPackageJson();
   const releaseSuffix = process.argv[2] || createReleaseSuffix();
   const imageTag = `${pkg.name}:${releaseSuffix}`;
-  const imageTarGzPath = path.join(rootDir, `docker_${pkg.name}_${releaseSuffix}.tar.gz`);
+  const imageTarGzPath = path.join(distRootDir, `docker_${pkg.name}_${releaseSuffix}.tar.gz`);
   const baseImage = process.env.BASE_IMAGE || defaultBaseImage;
 
   ensureBaseImageReady(baseImage);
