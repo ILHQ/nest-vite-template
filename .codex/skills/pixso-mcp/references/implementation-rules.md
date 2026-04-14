@@ -79,6 +79,11 @@
 - 禁止出现任何 `font-family`。
 - 如设计稿有字体要求，仅保留字号、字重、行高、字色等可落地信息。
 
+### 5. 布局规则
+
+- 默认使用 `display: flex` 处理布局。
+- 只有明确存在二维网格排布需求时，才使用 `display: grid`。
+
 ## Antd 使用规则
 
 ### 1. 优先复用基础组件
@@ -178,6 +183,7 @@
 - 类名是否全部使用 kebab-case。
 - 是否存在超过 3 个名词的超长类名。
 - 是否出现 `font-family`。
+- 布局是否默认使用 `display: flex`，仅在必要时使用 `display: grid`。
 - 是否误改全局 `margin`、`padding`、`box-sizing`。
 - 是否把全局视觉问题错误地写进页面局部样式。
 - 是否优先复用了 Antd 与 `mixin.less`。

@@ -1,6 +1,6 @@
 ---
 name: web-style
-description: 在当前仓库中专门为 React 页面实现、修改或重构 Less/CSS 样式，输出符合 Antd 与现有全局样式约束的页面视觉代码。用于用户提到“写页面样式”“补 less/css 样式”“写页面布局”“还原设计稿样式”“优化前端视觉”“调整页面间距/颜色/圆角/阴影”“修改 class 名样式”“改 Antd 组件样式”“改 theme token”“抽取公共样式”“新增页面样式文件”“重写页面 less”“处理滚动区域样式”等场景；当请求重点是 Less、CSS、class、布局、页面视觉、主题 token、间距、颜色、圆角、阴影、滚动区域，而不是 JS/TS/TSX 逻辑、hooks、请求、路由、状态管理时，优先使用此 skill。若任务主要是组件逻辑、事件处理、接口调用、工具函数、常量、hooks、TSX/TypeScript，则不要使用本 skill，而应交给 `frontend`。强制遵循仓库规则：页面样式使用 Less、每页仅一个根类且保持嵌套、类名使用 kebab-case 且最多 3 个名词、禁止 font-family、全局通用视觉优先走 ConfigProvider theme、局部样式走页面类名、全局 margin/padding/box-sizing 不重置、优先复用 styles/mixin.less、默认隐藏滚动条。
+description: 在当前仓库中专门为 React 页面实现、修改或重构 Less/CSS 样式，输出符合 Antd 与现有全局样式约束的页面视觉代码。用于用户提到“写页面样式”“补 less/css 样式”“写页面布局”“还原设计稿样式”“优化前端视觉”“调整页面间距/颜色/圆角/阴影”“修改 class 名样式”“改 Antd 组件样式”“改 theme token”“抽取公共样式”“新增页面样式文件”“重写页面 less”“处理滚动区域样式”等场景；当请求重点是 Less、CSS、class、布局、页面视觉、主题 token、间距、颜色、圆角、阴影、滚动区域，而不是 JS/TS/TSX 逻辑、hooks、请求、路由、状态管理时，优先使用此 skill。若任务主要是组件逻辑、事件处理、接口调用、工具函数、常量、hooks、TSX/TypeScript，则不要使用本 skill，而应交给 `frontend`。强制遵循仓库规则：页面样式使用 Less、每页仅一个根类且保持嵌套、类名使用 kebab-case 且最多 3 个名词、禁止 font-family、默认使用 display: flex 布局、必要时使用 display: grid 布局、全局通用视觉优先走 ConfigProvider theme、局部样式走页面类名、全局 margin/padding/box-sizing 不重置、优先复用 styles/mixin.less、默认隐藏滚动条。
 ---
 
 # Web Style
@@ -33,6 +33,7 @@ description: 在当前仓库中专门为 React 页面实现、修改或重构 Le
 - 类名使用 kebab-case，中间用 `-` 连接。
 - 单个类名最多 3 个名词；超过时缩写次要词或省略冗余前缀。
 - 禁止出现任何 `font-family`。
+- 布局默认使用 `display: flex`；只有明确存在二维网格排布需求时，才使用 `display: grid`。
 - 基础组件优先使用 Antd。
 - 若样式影响多个页面或属于设计系统 token，优先改 `ConfigProvider` 下的 `theme`。
 - 若样式只影响当前页面或局部业务块，直接在页面根类下追加类名修改。

@@ -1,6 +1,6 @@
 ---
 name: pixso-mcp
-description: 使用 Pixso MCP 在当前仓库中读取 Pixso 设计稿、节点、标注、切图与样式信息，并落地为 React + Antd + Less 页面实现。用于用户提到“Pixso MCP”“Pixso 设计稿还原”“按设计稿开发页面”“根据设计稿生成前端页面”“下载切图并接入页面”“把设计稿转成 Antd 页面”“把 Pixso 页面做成 React 页面”等场景；当用户消息中直接提供包含 `pixso`、`pixso.cn`、`app.pixso.cn` 或明显属于 Pixso 设计稿分享页的链接时，也优先使用此 skill。强制遵循当前仓库的前端约束：页面样式使用 Less、每页仅一个根类且保持嵌套、类名使用 kebab-case、禁止 font-family、全局通用视觉优先走 ConfigProvider theme、局部样式走页面类名、默认隐藏滚动条、切图压缩后放入 frontend/src/assets。
+description: 使用 Pixso MCP 在当前仓库中读取 Pixso 设计稿、节点、标注、切图与样式信息，并落地为 React + Antd + Less 页面实现。用于用户提到“Pixso MCP”“Pixso 设计稿还原”“按设计稿开发页面”“根据设计稿生成前端页面”“下载切图并接入页面”“把设计稿转成 Antd 页面”“把 Pixso 页面做成 React 页面”等场景；当用户消息中直接提供包含 `pixso`、`pixso.cn`、`app.pixso.cn` 或明显属于 Pixso 设计稿分享页的链接时，也优先使用此 skill。强制遵循当前仓库的前端约束：页面样式使用 Less、每页仅一个根类且保持嵌套、类名使用 kebab-case、禁止 font-family、默认使用 display: flex 布局、必要时使用 display: grid 布局、全局通用视觉优先走 ConfigProvider theme、局部样式走页面类名、默认隐藏滚动条、切图压缩后放入 frontend/src/assets。
 ---
 
 # Pixso MCP
@@ -29,6 +29,7 @@ description: 使用 Pixso MCP 在当前仓库中读取 Pixso 设计稿、节点�
 - 每个页面样式文件只保留一个页面级根类，例如 `.home-page`、`.user-center-page`；其余样式全部嵌套在根类下。
 - 类名统一使用 kebab-case，单个类名最多保留 3 个名词；超过时优先缩写或省略弱语义前缀。
 - 不写任何 `font-family`。
+- 布局默认使用 `display: flex`；只有明确存在二维网格排布需求时，才使用 `display: grid`。
 - `frontend/src/index.less` 已定义全局 `margin`、`padding`、`box-sizing`，不要重复重置，也不要覆盖成其他盒模型。
 - 基础组件优先使用 Antd；如果改的是全局通用视觉规则，优先修改 `frontend/src/App.tsx` 中 `ConfigProvider` 的 `theme`。
 - 仅对局部特定样式使用页面类名做覆盖，不要把全局 token 改动塞进页面 Less。

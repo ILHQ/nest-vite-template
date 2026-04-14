@@ -55,6 +55,11 @@
 - 禁止使用 `font-family`。
 - 仅保留字号、字重、行高、颜色等必要信息。
 
+### 布局方式
+
+- 默认使用 `display: flex` 处理布局。
+- 只有明确存在二维网格排布需求时，才使用 `display: grid`。
+
 ## 全局边界
 
 `frontend/src/index.less` 已定义：
@@ -137,6 +142,7 @@
 - 类名是否全部为 kebab-case
 - 是否存在超过 3 个名词的长类名
 - 是否出现 `font-family`
+- 布局是否默认使用 `display: flex`，仅在必要时使用 `display: grid`
 - 是否误改全局 reset 或盒模型
 - 是否把全局问题错误写到页面局部
 - 是否优先复用 Antd 与 `styles/mixin.less`
