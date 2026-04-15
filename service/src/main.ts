@@ -1,4 +1,4 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
@@ -42,8 +42,9 @@ async function bootstrap() {
     logger: appLogger,
   });
   app.useLogger(appLogger);
-  app.useGlobalFilters(new AllExceptionsFilter());
-  app.useGlobalInterceptors(new HttpResponseInterceptor());
+  const reflector = app.get(Reflector);
+  app.useGlobalFilters(new AllExceptionsFilter(reflector));
+  app.useGlobalInterceptors(new HttpResponseInterceptor(reflector));
   const proxyViteService = app.get(ProxyViteService);
   const isDevelopment = process.env.NODE_ENV === 'development';
 

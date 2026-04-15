@@ -5,6 +5,7 @@ import envConfig from '../../env';
 import process from 'process';
 import path from 'node:path';
 const fs = require('fs-extra');
+import { SkipResponseWrap } from '../skip-response-wrap.decorator';
 
 const viteManifestPath = path.join(envConfig.paths.frontendDistRoot, 'manifest.json');
 
@@ -26,8 +27,16 @@ export class ProxyViteController {
 
   // 服务健康检查。
   @Get(`/health`)
-  getHealth(): typeof envConfig {
-    return this.proxyViteService.getHealth();
+  @SkipResponseWrap()
+  getHealth(): string {
+    return 'hello';
+  }
+
+  // 服务环境变量
+  @Get(`/env`)
+  @SkipResponseWrap()
+  getEnv(): typeof envConfig {
+    return envConfig;
   }
 
   // 接口代理/api前缀

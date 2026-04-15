@@ -10,11 +10,6 @@ type ProxyMiddleware = RequestHandler & {
 
 @Injectable()
 export class ProxyViteService {
-  // 健康检查接口。
-  getHealth(): typeof envConfig {
-    return envConfig;
-  }
-
   // 代理/api
   proxyApi(): typeof envConfig {
     return createProxyMiddleware({

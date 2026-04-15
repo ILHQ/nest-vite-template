@@ -1,4 +1,5 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -7,13 +8,20 @@ import {
   isApiResponse,
   shouldUseStandardResponse,
 } from './http-response';
+import { shouldSkipResponseWrap } from './skip-response-wrap.decorator';
 
 // 全局成功响应拦截器：把控制器返回值统一包装为标准报文。
 @Injectable()
 export class HttpResponseInterceptor implements NestInterceptor {
+  constructor(private readonly reflector: Reflector) {}
+
   // 仅处理需要统一协议的 HTTP 请求。
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     if (context.getType() !== 'http') {
+      return next.handle();
+    }
+
+    if (shouldSkipResponseWrap(this.reflector, context.getHandler())) {
       return next.handle();
     }
 
