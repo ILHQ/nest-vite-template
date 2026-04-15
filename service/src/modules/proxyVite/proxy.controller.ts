@@ -1,11 +1,11 @@
 import { Controller, Get, Redirect, Render, All, Req, Res } from '@nestjs/common';
 import { ProxyViteService } from './proxy.service';
 import type { Request, Response } from 'express';
-import envConfig from '../../env';
+import envConfig from '../../../env';
 import process from 'process';
 import path from 'node:path';
 const fs = require('fs-extra');
-import { SkipResponseWrap } from '../skip-response-wrap.decorator';
+import { SkipResponseWrap } from '../../interceptor/skip-response-wrap.decorator';
 
 const viteManifestPath = path.join(envConfig.paths.frontendDistRoot, 'manifest.json');
 

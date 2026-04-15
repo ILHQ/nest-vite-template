@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { IncomingMessage } from 'http';
 import type { Duplex } from 'stream';
 import { createProxyMiddleware, RequestHandler } from 'http-proxy-middleware';
-import envConfig from '../../env';
+import envConfig from '../../../env';
 
 type ProxyMiddleware = RequestHandler & {
   upgrade: (req: IncomingMessage, socket: Duplex, head: Buffer) => void;

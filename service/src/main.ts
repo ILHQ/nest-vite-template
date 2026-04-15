@@ -1,10 +1,10 @@
 import { NestFactory, Reflector } from '@nestjs/core';
-import { AppModule } from './app.module';
+import { AppModule } from './modules/app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import envConfig from '../env';
 import { EventEmitter } from 'events';
-import { ProxyViteService } from './proxyVite/proxy.service';
+import { ProxyViteService } from './modules/proxyVite/proxy.service';
 import process from 'process';
 import { networkInterfaces } from 'os';
 import type { NextFunction, Request, Response } from 'express';
@@ -14,8 +14,8 @@ import {
   shouldLogHttpRequest,
   shouldLogHttpError,
 } from './logger/log-policy';
-import { AllExceptionsFilter } from './http-exception.filter';
-import { HttpResponseInterceptor } from './http-response.interceptor';
+import { AllExceptionsFilter } from './interceptor/http-exception.filter';
+import { HttpResponseInterceptor } from './interceptor/http-response.interceptor';
 
 type TraceableRequest = Request & {
   traceId?: string;

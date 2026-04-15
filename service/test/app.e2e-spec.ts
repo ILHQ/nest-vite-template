@@ -3,10 +3,10 @@ import { ArgumentsHost, CallHandler, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { lastValueFrom, of } from 'rxjs';
 import envConfig from './../env';
-import { BusinessController } from './../src/business/business.controller';
-import { BusinessService } from './../src/business/business.service';
-import { AllExceptionsFilter } from './../src/http-exception.filter';
-import { HttpResponseInterceptor } from './../src/http-response.interceptor';
+import { BusinessController } from '../src/modules/business/business.controller';
+import { BusinessService } from '../src/modules/business/business.service';
+import { AllExceptionsFilter } from '../src/interceptor/http-exception.filter';
+import { HttpResponseInterceptor } from '../src/interceptor/http-response.interceptor';
 import { appLogger } from './../src/logger/app-logger';
 
 type MockResponse = {

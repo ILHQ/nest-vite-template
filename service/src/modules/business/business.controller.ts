@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { BusinessService } from './business.service';
-import envConfig from '../../env';
+import envConfig from '../../../env';
 
 @Controller()
 export class BusinessController {
