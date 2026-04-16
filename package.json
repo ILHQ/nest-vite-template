@@ -7,9 +7,9 @@
   "scripts": {
     "dev:development": "concurrently -n service,frontend -c blue,green \"npm --prefix ./service run start:development\" \"npm --prefix ./frontend run dev:development\"",
     "dev:production": "concurrently -n service,frontend -c blue,green \"npm --prefix ./service run start:production\" \"npm --prefix ./frontend run dev:production\"",
-    "build:development": "NODE_ENV=development node ./build.ts",
-    "build:production": "NODE_ENV=production node ./build.ts",
-    "buildDocker": "node ./dockerBuild.ts",
+    "build:development": "NODE_ENV=development node ./build.js",
+    "build:production": "NODE_ENV=production node ./build.js",
+    "buildDocker": "node ./dockerBuild.js",
     "install:all": "pnpm install && pnpm -C ./service install && pnpm -C ./frontend install",
     "lint": "npm run lint:frontend && npm run lint:service",
     "lint:frontend": "node ./node_modules/eslint/bin/eslint.js --config ./eslint.config.js \"frontend/**/*.{js,jsx,ts,tsx}\"",

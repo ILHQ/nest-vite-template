@@ -53,7 +53,6 @@ function ensureBaseImageReady(baseImage) {
   const pullResult = shell.exec(`docker pull --platform linux/amd64 "${baseImage}"`, { cwd: rootDir });
   if (pullResult.code !== 0) {
     shell.echo(`拉取基础镜像失败：${baseImage}`);
-    shell.echo(`可通过 BASE_IMAGE 覆盖，例如：BASE_IMAGE="node:22-slim" node "./dockerBuild.ts"`);
     if (inspectOutput) {
       shell.echo(`inspect 输出：\n${inspectOutput}`);
     }

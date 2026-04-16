@@ -13,7 +13,7 @@ const outBinDir = path.join(outDir, 'bin');
 const rootPackagePath = path.join(rootDir, 'package.json');
 
 // 执行 frontend 构建命令。
-function buildFrontend(NODE_ENV: string): any {
+function buildFrontend(NODE_ENV) {
   const result = shell.exec(`npm run build:${NODE_ENV}`, { cwd: frontendDir, env: process.env });
   if (result.code !== 0) {
     shell.exit(result.code);
@@ -21,7 +21,7 @@ function buildFrontend(NODE_ENV: string): any {
 }
 
 // 执行 service 构建命令，生成 dist 产物。
-function buildService(NODE_ENV: string): any {
+function buildService(NODE_ENV) {
   const result = shell.exec(`npm run build:${NODE_ENV}`, { cwd: serviceDir, env: process.env });
   if (result.code !== 0) {
     shell.exit(result.code);
@@ -105,7 +105,7 @@ function writeOutPackageJson(rootPkg) {
 }
 
 // 在 dist/out/bin 下生成生产启动脚本。
-function createOutStartScript(NODE_ENV:string): void {
+function createOutStartScript(NODE_ENV) {
   shell.mkdir('-p', outBinDir);
   const scriptPath = path.join(outBinDir, 'start.sh');
   const scriptContent = `#!/usr/bin/env bash
@@ -191,16 +191,16 @@ services:
   fs.writeFileSync(composePath, composeContent);
 }
 
-// 执行 dockerBuild.ts，构建并导出镜像。
+// 执行 dockerBuild.js，构建并导出镜像。
 function runDockerBuildScript(releaseSuffix) {
-  const dockerBuildScriptPath = path.join(rootDir, 'dockerBuild.ts');
+  const dockerBuildScriptPath = path.join(rootDir, 'dockerBuild.js');
 
   if (!shell.test('-f', dockerBuildScriptPath)) {
     shell.echo('未找到 dockerBuild.ts，跳过镜像构建。');
     return;
   }
 
-  const result = shell.exec(`node "./dockerBuild.ts" "${releaseSuffix}"`, { cwd: rootDir });
+  const result = shell.exec(`node "./dockerBuild.js" "${releaseSuffix}"`, { cwd: rootDir });
   if (result.code !== 0) {
     shell.exit(result.code);
   }
