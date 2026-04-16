@@ -71,7 +71,9 @@ export class ProxyViteController {
   @Get([envConfig.routerPrefix, `${envConfig.routerPrefix}/`, `${envConfig.routerPrefix}/*path`])
   @Render('index')
   getIndex(): object {
-    if (process.env.NODE_ENV === 'production') {
+    // 是否是构建环境
+    const isBuild = process.env.IS_BUILD === 'true';
+    if (isBuild) {
       const manifest = fs.readJsonSync(viteManifestPath) as ViteManifest;
       const entry = manifest['index.html'];
 

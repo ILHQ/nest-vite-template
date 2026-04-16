@@ -46,7 +46,8 @@ async function bootstrap() {
   app.useGlobalFilters(new AllExceptionsFilter(reflector));
   app.useGlobalInterceptors(new HttpResponseInterceptor(reflector));
   const proxyViteService = app.get(ProxyViteService);
-  const isDevelopment = process.env.NODE_ENV === 'development';
+  // 是否是构建环境
+  const isBuild = process.env.IS_BUILD === 'true';
 
   // 记录白名单接口访问日志，并兜底记录 5xx 错误日志。
   app.use((req: Request, res: Response, next: NextFunction) => {
@@ -91,7 +92,7 @@ async function bootstrap() {
   });
 
   // 仅在开发环境挂载 Vite 代理与 HMR WebSocket 转发。
-  if (isDevelopment) {
+  if (isBuild) {
     // 开发环境下，public 资源未命中 service/public 时回退到 frontend/public。
     app.useStaticAssets(join(envConfig.paths.repoRoot, 'frontend', 'public'), {
       prefix: `${envConfig.routerPrefix}/public/`,
@@ -108,7 +109,7 @@ async function bootstrap() {
   }
 
   // 生产环境挂载前端构建产物目录。
-  if (!isDevelopment) {
+  if (!isBuild) {
     // 生产环境下将 frontend/dist/public 也映射到统一的 /public 前缀。
     app.useStaticAssets(join(envConfig.paths.frontendDistRoot, 'public'), {
       prefix: `${envConfig.routerPrefix}/public/`,

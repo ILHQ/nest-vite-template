@@ -13,16 +13,16 @@ const outBinDir = path.join(outDir, 'bin');
 const rootPackagePath = path.join(rootDir, 'package.json');
 
 // 执行 frontend 构建命令。
-function buildFrontend() {
-  const result = shell.exec('npm run build', { cwd: frontendDir });
+function buildFrontend(NODE_ENV: string): any {
+  const result = shell.exec(`npm run build:${NODE_ENV}`, { cwd: frontendDir, env: process.env });
   if (result.code !== 0) {
     shell.exit(result.code);
   }
 }
 
 // 执行 service 构建命令，生成 dist 产物。
-function buildService() {
-  const result = shell.exec('npm run build', { cwd: serviceDir });
+function buildService(NODE_ENV: string): any {
+  const result = shell.exec(`npm run build:${NODE_ENV}`, { cwd: serviceDir, env: process.env });
   if (result.code !== 0) {
     shell.exit(result.code);
   }
@@ -64,7 +64,7 @@ function copyServiceFilesToOut() {
   }
 }
 
-// 复制 service/dist 到 dist/out/service/dist，供 start:prod 运行。
+// 复制 service/dist 到 dist/out/service/dist
 function copyServiceDistToOut() {
   const serviceDistDir = path.join(serviceDir, 'dist');
 
@@ -105,13 +105,13 @@ function writeOutPackageJson(rootPkg) {
 }
 
 // 在 dist/out/bin 下生成生产启动脚本。
-function createOutStartScript() {
+function createOutStartScript(NODE_ENV:string): void {
   shell.mkdir('-p', outBinDir);
   const scriptPath = path.join(outBinDir, 'start.sh');
   const scriptContent = `#!/usr/bin/env bash
 set -e
 cd "$(dirname "$0")/../service"
-npm run start:prod
+npm run start:${NODE_ENV}
 `;
   fs.writeFileSync(scriptPath, scriptContent);
   shell.chmod('+x', scriptPath);
@@ -209,14 +209,17 @@ function runDockerBuildScript(releaseSuffix) {
 function main() {
   const rootPkg = readRootPackageJson();
   const releaseSuffix = createReleaseSuffix();
+  shell.echo(
+    `开始执行构建：NODE_ENV=${process.env.NODE_ENV}`,
+  );
   cleanDistDir();
-  buildFrontend();
-  buildService();
+  buildFrontend(process.env.NODE_ENV);
+  buildService(process.env.NODE_ENV);
   copyDistToOut();
   copyServiceFilesToOut();
   copyServiceDistToOut();
   writeOutPackageJson(rootPkg);
-  createOutStartScript();
+  createOutStartScript(process.env.NODE_ENV);
   const archiveName = archiveOutDirectory(rootPkg, releaseSuffix);
   removeOutDirectory();
   createDockerfile(archiveName);

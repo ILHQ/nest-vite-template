@@ -116,9 +116,10 @@ class AppLogger implements LoggerService {
   private readonly logToConsole: boolean;
 
   constructor() {
-    const isDevelopment = process.env.NODE_ENV === 'development';
-    const defaultLogToFile = !isDevelopment;
-    const defaultLogToConsole = isDevelopment ? true : envConfig.logToConsole;
+    // 是否是构建环境
+    const isBuild = process.env.IS_BUILD === 'true';
+    const defaultLogToFile = !isBuild;
+    const defaultLogToConsole = isBuild ? true : envConfig.logToConsole;
 
     this.minLevel = normalizeLogLevel(envConfig.logLevel);
     this.logDir = path.resolve(envConfig.logDir);
