@@ -32,6 +32,7 @@ lerna-debug.log*
 # temp files
 .temp/
 .tmp/
+.playwright-mcp
 
 # IDEs and editors
 .idea/
