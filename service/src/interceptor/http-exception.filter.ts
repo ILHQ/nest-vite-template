@@ -8,8 +8,8 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Request, Response } from 'express';
-import { appLogger } from '../logger/app-logger';
-import { shouldLogHttpError } from '../logger/log-policy';
+import { appLogger } from '@/logger/app-logger';
+import { shouldLogHttpError } from '@/logger/log-policy';
 import { createErrorResponse, shouldUseStandardResponse } from './http-response';
 import { shouldSkipResponseWrap } from './skip-response-wrap.decorator';
 

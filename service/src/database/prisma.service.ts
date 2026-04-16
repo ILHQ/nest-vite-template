@@ -2,7 +2,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import type { Pool } from 'pg';
-import envConfig from '../../env';
+import envConfig from '@services/env';
 import { POSTGRES_POOL } from './database.constants';
 
 // 统一负责 Prisma 访问入口，并在应用关闭时释放 Prisma 与共享 pg 连接池资源。

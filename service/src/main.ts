@@ -1,21 +1,21 @@
 import { NestFactory, Reflector } from '@nestjs/core';
-import { AppModule } from './modules/app.module';
+import { AppModule } from '@/modules/app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
-import envConfig from '../env';
+import envConfig from '@services/env';
 import { EventEmitter } from 'events';
-import { ProxyViteService } from './modules/proxyVite/proxy.service';
+import { ProxyViteService } from '@/modules/proxyVite/proxy.service';
 import { networkInterfaces } from 'os';
 import type { NextFunction, Request, Response } from 'express';
-import { appLogger, createTraceId } from './logger/app-logger';
+import { appLogger, createTraceId } from '@/logger/app-logger';
 import {
   normalizeRequestPath,
   shouldLogHttpRequest,
   shouldLogHttpError,
-} from './logger/log-policy';
-import { AllExceptionsFilter } from './interceptor/http-exception.filter';
-import { HttpResponseInterceptor } from './interceptor/http-response.interceptor';
-import { isBuildRuntime } from './tools/utils';
+} from '@/logger/log-policy';
+import { AllExceptionsFilter } from '@/interceptor/http-exception.filter';
+import { HttpResponseInterceptor } from '@/interceptor/http-response.interceptor';
+import { isBuildRuntime } from '@/tools/utils';
 
 type TraceableRequest = Request & {
   traceId?: string;

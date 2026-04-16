@@ -38,9 +38,7 @@ export default defineConfig(({ command }) => {
     },
     plugins: [react(), copyPublicToDistPublicPlugin()],
     resolve: {
-      alias: {
-        '@': path.resolve('./src'),
-      },
+      tsconfigPaths: true,
     },
     build: {
       outDir: path.resolve(__dirname, './dist'),

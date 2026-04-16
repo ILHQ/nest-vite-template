@@ -1,5 +1,5 @@
 import { HttpException } from '@nestjs/common';
-import envConfig from '../../env';
+import envConfig from '@services/env';
 
 // 统一定义项目内部 HTTP 报文结构与构造工具。
 export type ApiErrorType = 'BUSINESS' | 'HTTP' | 'SYSTEM';

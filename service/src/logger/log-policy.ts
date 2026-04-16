@@ -1,4 +1,4 @@
-import envConfig from '../../env';
+import envConfig from '@services/env';
 
 type LogPolicy = {
   requestLogAllowlist: string[];

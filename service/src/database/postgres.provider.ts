@@ -1,7 +1,7 @@
 import type { Provider } from '@nestjs/common';
 import { Pool, type PoolConfig } from 'pg';
-import type { DatabaseConfig } from '../../env';
-import envConfig from '../../env';
+import type { DatabaseConfig } from '@services/env';
+import envConfig from '@services/env';
 import { POSTGRES_POOL } from './database.constants';
 
 // pg 驱动要求的秒/毫秒字段与模板配置并不完全一致，这里做一次转换。

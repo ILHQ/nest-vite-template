@@ -6,28 +6,28 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "dev:development": "NODE_ENV=development nest start --watch",
-    "dev:production": "NODE_ENV=production nest start --watch",
-    "build:development": "NODE_ENV=development nest build",
-    "build:production": "NODE_ENV=production nest build",
+    "dev:development": "NODE_ENV=development node ./scripts/start-nest-dev.cjs start --watch",
+    "dev:production": "NODE_ENV=production node ./scripts/start-nest-dev.cjs start --watch",
+    "build:development": "NODE_ENV=development nest build && tsc-alias -p tsconfig.json",
+    "build:production": "NODE_ENV=production nest build && tsc-alias -p tsconfig.json",
     "start:development": "NODE_ENV=development IS_BUILD=true node dist/src/main",
     "start:production": "NODE_ENV=production IS_BUILD=true node dist/src/main",
-    "dev:development:debug": "NODE_ENV=development nest start --debug --watch",
+    "dev:development:debug": "NODE_ENV=development node ./scripts/start-nest-dev.cjs start --debug --watch",
     "postinstall": "node ./scripts/prisma-generate.cjs",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test": "jest --config ./jest.config.cjs",
+    "test:watch": "jest --config ./jest.config.cjs --watch",
+    "test:cov": "jest --config ./jest.config.cjs --coverage",
+    "test:debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --config ./jest.config.cjs --runInBand",
+    "test:e2e": "jest --config ./test/jest-e2e.config.cjs",
     "db:generate": "node ./scripts/prisma-generate.cjs --force",
     "db:studio": "prisma studio"
   },
   "dependencies": {
-    "@prisma/adapter-pg": "^7.7.0",
-    "@prisma/client": "^7.7.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
+    "@prisma/adapter-pg": "^7.7.0",
+    "@prisma/client": "^7.7.0",
     "ejs": "^3.1.10",
     "fs-extra": "^11.3.4",
     "http-proxy-middleware": "^3.0.5",
@@ -52,24 +52,8 @@
     "ts-jest": "^29.2.5",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
+    "tsc-alias": "^1.8.16",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3"
-  },
-  "jest": {
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts"
-    ],
-    "rootDir": "src",
-    "testRegex": ".*\\.spec\\.ts$",
-    "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
-    },
-    "collectCoverageFrom": [
-      "**/*.(t|j)s"
-    ],
-    "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
   }
 }

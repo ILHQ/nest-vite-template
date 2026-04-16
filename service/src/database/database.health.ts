@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { Pool } from 'pg';
-import envConfig from '../../env';
+import envConfig from '@services/env';
 import { POSTGRES_POOL } from './database.constants';
 import { PrismaService } from './prisma.service';
 

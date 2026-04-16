@@ -1,12 +1,12 @@
 import { Controller, Get, Redirect, Render, All, Req, Res } from '@nestjs/common';
 import { ProxyViteService } from './proxy.service';
 import type { Request, Response } from 'express';
-import envConfig from '../../../env';
+import envConfig from '@services/env';
 import path from 'node:path';
 const fs = require('fs-extra');
-import { SkipResponseWrap } from '../../interceptor/skip-response-wrap.decorator';
-import { DatabaseHealthService } from '../../database/database.health';
-import { isBuildRuntime } from '../../tools/utils';
+import { SkipResponseWrap } from '@/interceptor/skip-response-wrap.decorator';
+import { DatabaseHealthService } from '@/database/database.health';
+import { isBuildRuntime } from '@/tools/utils';
 
 const viteManifestPath = path.join(envConfig.paths.frontendDistRoot, 'manifest.json');
 

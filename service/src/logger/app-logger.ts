@@ -3,8 +3,8 @@ import { createWriteStream, mkdirSync, type WriteStream } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import process from 'node:process';
-import envConfig from '../../env';
-import { isBuildRuntime } from '../tools/utils';
+import envConfig from '@services/env';
+import { isBuildRuntime } from '@/tools/utils';
 
 type AppLogLevel = 'fatal' | 'error' | 'warn' | 'log' | 'debug' | 'verbose';
 

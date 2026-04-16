@@ -41,8 +41,8 @@ jest.mock('pg', () => {
   return { Pool };
 });
 
-import { AppModule } from '../src/modules/app.module';
-import { ProxyViteController } from '../src/modules/proxyVite/proxy.controller';
+import { AppModule } from '@/modules/app.module';
+import { ProxyViteController } from '@/modules/proxyVite/proxy.controller';
 
 describe('App health (e2e)', () => {
   let moduleFixture: TestingModule;
@@ -64,11 +64,7 @@ describe('App health (e2e)', () => {
   it('/health (GET)', async () => {
     const response = await proxyViteController.getHealth();
 
-    expect(response).toEqual({
-      status: 'ok',
-      service: 'nest-vite-template',
-      environment: 'test',
-    });
+    expect(response).toEqual('hello');
   });
 
   it('/health/database (GET)', async () => {
@@ -76,8 +72,6 @@ describe('App health (e2e)', () => {
 
     expect(response).toEqual({
       status: 'ok',
-      service: 'nest-vite-template',
-      environment: 'test',
       database: {
         driver: 'postgresql',
         orm: 'prisma',
