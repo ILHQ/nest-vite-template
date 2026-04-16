@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import process from 'node:process';
 import envConfig from '../../env';
+import { isBuildRuntime } from '../tools/utils';
 
 type AppLogLevel = 'fatal' | 'error' | 'warn' | 'log' | 'debug' | 'verbose';
 
@@ -116,10 +117,10 @@ class AppLogger implements LoggerService {
   private readonly logToConsole: boolean;
 
   constructor() {
-    // 是否是构建环境
-    const isBuild = process.env.IS_BUILD === 'true';
-    const defaultLogToFile = !isBuild;
-    const defaultLogToConsole = isBuild ? true : envConfig.logToConsole;
+    // 构建产物模式默认写文件；开发代理模式默认输出到控制台。
+    const isBuild = isBuildRuntime();
+    const defaultLogToFile = isBuild;
+    const defaultLogToConsole = isBuild ? envConfig.logToConsole : true;
 
     this.minLevel = normalizeLogLevel(envConfig.logLevel);
     this.logDir = path.resolve(envConfig.logDir);

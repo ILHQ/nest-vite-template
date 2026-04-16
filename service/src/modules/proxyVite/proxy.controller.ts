@@ -2,11 +2,11 @@ import { Controller, Get, Redirect, Render, All, Req, Res } from '@nestjs/common
 import { ProxyViteService } from './proxy.service';
 import type { Request, Response } from 'express';
 import envConfig from '../../../env';
-import process from 'process';
 import path from 'node:path';
 const fs = require('fs-extra');
 import { SkipResponseWrap } from '../../interceptor/skip-response-wrap.decorator';
 import { DatabaseHealthService } from '../../database/database.health';
+import { isBuildRuntime } from '../../tools/utils';
 
 const viteManifestPath = path.join(envConfig.paths.frontendDistRoot, 'manifest.json');
 
@@ -67,12 +67,12 @@ export class ProxyViteController {
     });
   }
 
-  // 前端页面统一返回 ejs 模板，资源由 Vite 代理提供。
+  // 前端页面统一返回 ejs 模板，根据运行形态切换资源入口。
   @Get([envConfig.routerPrefix, `${envConfig.routerPrefix}/`, `${envConfig.routerPrefix}/*path`])
   @Render('index')
   getIndex(): object {
-    // 是否是构建环境
-    const isBuild = process.env.IS_BUILD === 'true';
+    // 构建产物模式读取 manifest；开发代理模式走 Vite 入口。
+    const isBuild = isBuildRuntime();
     if (isBuild) {
       const manifest = fs.readJsonSync(viteManifestPath) as ViteManifest;
       const entry = manifest['index.html'];

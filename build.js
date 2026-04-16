@@ -153,7 +153,9 @@ RUN tar -xzf ${archiveName} \\
   && pnpm config set registry https://registry.npmmirror.com \\
   && npm config set registry https://registry.npmmirror.com \\
   && cd $ARRANGE_PATH/out/service \\
-  && pnpm install --prod --frozen-lockfile \\
+  && SKIP_PRISMA_GENERATE=true pnpm install --frozen-lockfile \\
+  && pnpm run db:generate \\
+  && SKIP_PRISMA_GENERATE=true pnpm prune --prod \\
   && npm install pm2@latest -g
 
 WORKDIR $ARRANGE_PATH/out/bin

@@ -13,12 +13,13 @@
     "start:development": "NODE_ENV=development IS_BUILD=true node dist/src/main",
     "start:production": "NODE_ENV=production IS_BUILD=true node dist/src/main",
     "dev:development:debug": "NODE_ENV=development nest start --debug --watch",
+    "postinstall": "node ./scripts/prisma-generate.cjs",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "db:generate": "prisma generate",
+    "db:generate": "node ./scripts/prisma-generate.cjs --force",
     "db:studio": "prisma studio"
   },
   "dependencies": {
