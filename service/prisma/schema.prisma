@@ -9,7 +9,7 @@ datasource db {
 }
 
 // 模板项目的示例配置表，用于演示 Prisma 的基础读写路径。
-model TemplateSetting {
+model TestSetting {
   id        String   @id @default(cuid())
   key       String   @unique
   value     String
