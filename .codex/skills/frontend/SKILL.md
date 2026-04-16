@@ -20,7 +20,7 @@ description: 仅在当前仓库的 `frontend/` 目录下创建、生成、修改
    - `frontend/src/tools/common.ts`
    - `frontend/src/tools/utils.ts`
    - `frontend/src/tools/constant.ts`
-3. 先复用已有页面、组件、工具方法与常量结构，再决定是否新增文件。
+3. 先复用已有页面、组件、工具方法与常量结构，再决定是否新增文件；若 `frontend/src/components/` 下已有相同功能组件，优先复用，不重复创建。
 4. 代码实现优先使用普通函数调用；仅在初始化和明确依赖监听场景下使用 `useEffect`。
 5. 出现重复逻辑达到 3 次或预期跨页面复用时，立即抽取到公共位置。
 6. 提交前按 `references/frontend-rules.md` 自检。
@@ -34,6 +34,7 @@ description: 仅在当前仓库的 `frontend/` 目录下创建、生成、修改
 - 其他场景一律优先改为普通函数调用，不要为了触发执行而滥用 `useEffect`。
 - 使用 `useCallback` 时，一般不监听任何东西；优先保持空依赖并通过函数调用触发。
 - 同一段逻辑重复达到 3 次及以上必须拆分提取。
+- `frontend/src/components/` 用于存放全局组件；若已有相同功能组件，优先使用该目录下组件，不重复实现。
 - 跨页面复用的业务型逻辑提取到 `frontend/src/tools/common.ts`。
 - 跨页面复用的工具型逻辑提取到 `frontend/src/tools/utils.ts`。
 - `frontend/src/models/` 目录用于全局 hooks。
