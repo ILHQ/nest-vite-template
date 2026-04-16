@@ -6,6 +6,7 @@ import process from 'process';
 import path from 'node:path';
 const fs = require('fs-extra');
 import { SkipResponseWrap } from '../../interceptor/skip-response-wrap.decorator';
+import { DatabaseHealthService } from '../../database/database.health';
 
 const viteManifestPath = path.join(envConfig.paths.frontendDistRoot, 'manifest.json');
 
@@ -18,7 +19,10 @@ type ViteManifest = Record<string, ViteManifestEntry>;
 
 @Controller()
 export class ProxyViteController {
-  constructor(private readonly proxyViteService: ProxyViteService) {}
+  constructor(
+    private readonly proxyViteService: ProxyViteService,
+    private readonly databaseHealthService: DatabaseHealthService,
+  ) {}
 
   // 根路径重定向到前端路由前缀。
   @Get()
@@ -30,6 +34,19 @@ export class ProxyViteController {
   @SkipResponseWrap()
   getHealth(): string {
     return 'hello';
+  }
+
+  // 数据库健康检查。
+  @Get(`/health/database`)
+  @SkipResponseWrap()
+  async getDatabaseHealth(): Promise<object> {
+    const database = await this.databaseHealthService.getStatus();
+    const status = database.status === 'up' ? 'ok' : 'degraded';
+
+    return {
+      status,
+      database,
+    };
   }
 
   // 服务环境变量

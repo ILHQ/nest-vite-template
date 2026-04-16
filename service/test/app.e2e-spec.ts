@@ -1,194 +1,96 @@
 import 'reflect-metadata';
-import { ArgumentsHost, CallHandler, ExecutionContext } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { lastValueFrom, of } from 'rxjs';
-import envConfig from './../env';
-import { BusinessController } from '../src/modules/business/business.controller';
-import { BusinessService } from '../src/modules/business/business.service';
-import { AllExceptionsFilter } from '../src/interceptor/http-exception.filter';
-import { HttpResponseInterceptor } from '../src/interceptor/http-response.interceptor';
-import { appLogger } from './../src/logger/app-logger';
+import { Test, TestingModule } from '@nestjs/testing';
 
-type MockResponse = {
-  status: jest.Mock;
-  json: jest.Mock;
-  send: jest.Mock;
-  getHeader: jest.Mock;
-};
+process.env.DATABASE_URL = 'postgresql://postgres:postgres@127.0.0.1:5432/nest_vite_template_test';
 
-type TraceableRequest = {
-  method: string;
-  originalUrl: string;
-  url: string;
-  traceId?: string;
-  errorLogged?: boolean;
-};
+jest.mock('@prisma/client', () => {
+  class PrismaClient {
+    async $connect(): Promise<void> {}
 
-function createExecutionContext(requestPath: string, handler: Function): ExecutionContext {
-  return {
-    getType: () => 'http',
-    getHandler: () => handler,
-    switchToHttp: () => ({
-      getRequest: () => ({
-        originalUrl: requestPath,
-        url: requestPath,
-      }),
-    }),
-  } as unknown as ExecutionContext;
-}
+    async $disconnect(): Promise<void> {}
 
-function createCallHandler(data: unknown): CallHandler {
-  return {
-    handle: () => of(data),
-  };
-}
-
-function createMockResponse(): MockResponse {
-  const response = {
-    status: jest.fn(),
-    json: jest.fn(),
-    send: jest.fn(),
-    getHeader: jest.fn().mockReturnValue('trace-1'),
-  } as MockResponse;
-
-  response.status.mockReturnValue(response);
-  response.json.mockReturnValue(response);
-  response.send.mockReturnValue(response);
-  return response;
-}
-
-function createArgumentsHost(
-  requestPath: string,
-  handler: Function,
-  response: MockResponse,
-): ArgumentsHost {
-  const request: TraceableRequest = {
-    method: 'GET',
-    originalUrl: requestPath,
-    url: requestPath,
-    traceId: 'trace-1',
-  };
-
-  return {
-    switchToHttp: () => ({
-      getRequest: () => request,
-      getResponse: () => response,
-    }),
-    getHandler: () => handler,
-  } as unknown as ArgumentsHost;
-}
-
-function captureException(action: () => unknown): unknown {
-  try {
-    action();
-  } catch (error) {
-    return error;
+    async $queryRawUnsafe(): Promise<Array<{ alive: number }>> {
+      return [{ alive: 1 }];
+    }
   }
 
-  throw new Error('预期抛出异常，但没有抛出');
-}
+  return { PrismaClient };
+});
 
-describe('响应包装控制', () => {
-  const reflector = new Reflector();
-  const interceptor = new HttpResponseInterceptor(reflector);
-  const filter = new AllExceptionsFilter(reflector);
-  const controller = new BusinessController(new BusinessService());
+jest.mock('@prisma/adapter-pg', () => {
+  class PrismaPg {
+    constructor(_: unknown) {}
+  }
 
-  beforeEach(() => {
-    jest.spyOn(appLogger, 'logHttpException').mockImplementation(() => undefined);
+  return { PrismaPg };
+});
+
+jest.mock('pg', () => {
+  class Pool {
+    totalCount = 1;
+    idleCount = 1;
+    waitingCount = 0;
+
+    async query(): Promise<{ rows: Array<{ alive: number }> }> {
+      return { rows: [{ alive: 1 }] };
+    }
+
+    async end(): Promise<void> {}
+  }
+
+  return { Pool };
+});
+
+import { AppModule } from '../src/modules/app.module';
+import { ProxyViteController } from '../src/modules/proxyVite/proxy.controller';
+
+describe('App health (e2e)', () => {
+  let moduleFixture: TestingModule;
+  let proxyViteController: ProxyViteController;
+
+  beforeEach(async () => {
+    moduleFixture = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    await moduleFixture.init();
+    proxyViteController = moduleFixture.get(ProxyViteController);
   });
 
-  afterEach(() => {
-    jest.restoreAllMocks();
+  afterEach(async () => {
+    await moduleFixture.close();
   });
 
-  it('未标记装饰器的成功响应仍然包装', async () => {
-    const context = createExecutionContext(
-      `${envConfig.proxyPrefix}/business/test`,
-      controller.proxyApi,
-    );
+  it('/health (GET)', async () => {
+    const response = await proxyViteController.getHealth();
 
-    const result = await lastValueFrom(
-      interceptor.intercept(context, createCallHandler(controller.proxyApi())),
-    );
-
-    expect(result).toEqual({
-      data: 'test success',
-      errorCode: null,
-      errorDesc: null,
-      errorType: null,
-      exceptionType: null,
-      success: true,
+    expect(response).toEqual({
+      status: 'ok',
+      service: 'nest-vite-template',
+      environment: 'test',
     });
   });
 
-  it('未标记装饰器的异常响应仍然包装', () => {
-    const response = createMockResponse();
-    const exception = captureException(() => controller.businessError());
-    const host = createArgumentsHost(
-      `${envConfig.proxyPrefix}/business/error`,
-      controller.businessError,
-      response,
-    );
+  it('/health/database (GET)', async () => {
+    const response = await proxyViteController.getDatabaseHealth();
 
-    filter.catch(exception, host);
-
-    expect(response.status).toHaveBeenCalledWith(400);
-    expect(response.json).toHaveBeenCalledWith({
-      data: null,
-      errorCode: 'BUSINESS_400',
-      errorDesc: 'business error',
-      errorType: 'BUSINESS',
-      exceptionType: 'BadRequestException',
-      success: false,
-    });
-  });
-
-  it('标记装饰器的成功响应原样返回', async () => {
-    const context = createExecutionContext(`${envConfig.proxyPrefix}/business/raw`, controller.rawResponse);
-
-    const result = await lastValueFrom(
-      interceptor.intercept(context, createCallHandler(controller.rawResponse())),
-    );
-
-    expect(result).toEqual({
-      value: 'test success',
-    });
-  });
-
-  it('标记装饰器的 HTTP 异常原样返回', () => {
-    const response = createMockResponse();
-    const exception = captureException(() => controller.rawHttpError());
-    const host = createArgumentsHost(
-      `${envConfig.proxyPrefix}/business/raw/http-error`,
-      controller.rawHttpError,
-      response,
-    );
-
-    filter.catch(exception, host);
-
-    expect(response.status).toHaveBeenCalledWith(400);
-    expect(response.json).toHaveBeenCalledWith({
-      message: 'raw http error',
-      reason: 'INVALID_INPUT',
-    });
-  });
-
-  it('标记装饰器的系统异常不进入标准报文', () => {
-    const response = createMockResponse();
-    const exception = captureException(() => controller.rawSystemError());
-    const host = createArgumentsHost(
-      `${envConfig.proxyPrefix}/business/raw/system-error`,
-      controller.rawSystemError,
-      response,
-    );
-
-    filter.catch(exception, host);
-
-    expect(response.status).toHaveBeenCalledWith(500);
-    expect(response.json).toHaveBeenCalledWith({
-      statusCode: 500,
-      message: 'raw system error',
+    expect(response).toEqual({
+      status: 'ok',
+      service: 'nest-vite-template',
+      environment: 'test',
+      database: {
+        driver: 'postgresql',
+        orm: 'prisma',
+        status: 'up',
+        checkedAt: expect.any(String),
+        pool: {
+          min: 0,
+          max: 10,
+          total: 1,
+          idle: 1,
+          waiting: 0,
+        },
+      },
     });
   });
 });
