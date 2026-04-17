@@ -6,7 +6,7 @@
 - `service`：NestJS 11 + Prisma 7 + PostgreSQL
 - 根目录构建脚本：统一完成前后端构建、归档、Docker 镜像打包
 
-架构图见：[ARCHITECTURE.md](/Users/lcc/my/nest-vite-template/ARCHITECTURE.md)
+架构图见：[architecture-diagram.png](/Users/lcc/my/nest-vite-template/architecture-diagram.png)
 
 ## 1. 项目特点
 
