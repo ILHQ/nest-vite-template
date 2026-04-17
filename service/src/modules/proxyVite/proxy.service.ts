@@ -11,7 +11,7 @@ type ProxyMiddleware = RequestHandler & {
 @Injectable()
 export class ProxyViteService {
   // 代理/api
-  proxyApi(): typeof envConfig {
+  proxyApi(): RequestHandler {
     return createProxyMiddleware({
       target: envConfig.proxyApi,
       changeOrigin: true,

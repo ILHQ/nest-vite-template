@@ -1,6 +1,7 @@
 import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from '@/modules/app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { join } from 'path';
 import envConfig from '@services/env';
 import { EventEmitter } from 'events';
@@ -122,6 +123,13 @@ async function bootstrap() {
 
   app.setBaseViewsDir(join(envConfig.paths.serviceSrcRoot, 'view'));
   app.setViewEngine('ejs');
+
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle(envConfig.pkg.description ?? 'Service API')
+    .setVersion('1.0')
+    .build();
+  const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('api-docs', app, swaggerDocument);
 
   EventEmitter.defaultMaxListeners = Infinity;
 

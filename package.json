@@ -5,8 +5,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev:development": "concurrently -n service,frontend -c blue,green \"npm --prefix ./service run start:development\" \"npm --prefix ./frontend run dev:development\"",
-    "dev:production": "concurrently -n service,frontend -c blue,green \"npm --prefix ./service run start:production\" \"npm --prefix ./frontend run dev:production\"",
+    "dev:development": "concurrently -n service,frontend -c blue,green \"npm --prefix ./service run dev:development\" \"npm --prefix ./frontend run dev:development\"",
+    "dev:production": "concurrently -n service,frontend -c blue,green \"npm --prefix ./service run dev:production\" \"npm --prefix ./frontend run dev:production\"",
     "build:development": "NODE_ENV=development node ./build.js",
     "build:production": "NODE_ENV=production node ./build.js",
     "buildDocker": "node ./dockerBuild.js",
@@ -34,7 +34,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "lodash": "^4.17.23",
     "shelljs": "^0.10.0"
   }
 }

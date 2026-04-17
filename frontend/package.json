@@ -13,7 +13,7 @@
   "dependencies": {
     "@deepinnet/model-context": "^0.0.3",
     "antd": "^6.3.5",
-    "lodash": "^4.17.21",
+    "lodash-es": "^4.17.21",
     "react": "^18.x",
     "react-dom": "^18.x",
     "react-router-dom": "^6.x"

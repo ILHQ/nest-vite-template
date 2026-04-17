@@ -1,4 +1,3 @@
-import lodash from 'lodash';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
@@ -8,7 +7,30 @@ type PackageJson = {
   description?: string;
 };
 
-const { merge } = lodash;
+function deepMerge<T extends Record<string, unknown>>(...sources: Array<Partial<T>>): T {
+  const result: Record<string, unknown> = {};
+  for (const source of sources) {
+    if (!source || typeof source !== 'object') continue;
+    for (const [key, value] of Object.entries(source)) {
+      if (
+        value !== null &&
+        typeof value === 'object' &&
+        !Array.isArray(value) &&
+        result[key] !== null &&
+        typeof result[key] === 'object' &&
+        !Array.isArray(result[key])
+      ) {
+        result[key] = deepMerge(
+          result[key] as Record<string, unknown>,
+          value as Record<string, unknown>,
+        );
+      } else {
+        result[key] = value;
+      }
+    }
+  }
+  return result as T;
+}
 
 type RuntimePaths = {
   // 仓库根目录，用于定位 frontend、service 等顶层目录。
@@ -52,32 +74,35 @@ export type DatabaseConfig = {
 };
 
 type EnvConfig = {
-  // 仓库 package.json 中读取到的基础信息，主要用于拼接路由前缀和页面标题。
+  // 仓库 package.json 中读取到的基础信息；固定由代码读取，不允许环境变量覆盖。
   pkg: PackageJson;
-  // 运行时目录集合，集中管理所有需要动态推导的路径。
+  // 运行时目录集合；固定由代码推导，不允许环境变量覆盖。
   paths: RuntimePaths;
   // Nest HTTP 服务监听端口，对应环境变量 `SERVICE_PORT`。
   servicePort: number;
-  // Vite 开发服务端口，仅开发环境代理前端资源时使用。
+  // Vite 开发服务端口，对应环境变量 `FRONTEND_PORT`。
   frontendPort: number;
-  // 日志文件输出目录，对应环境变量 `LOG_DIR`。
+  // 日志文件输出目录；固定按运行目录推导，不允许环境变量覆盖。
   logDir: string;
   // 最低日志级别，对应环境变量 `LOG_LEVEL`。
   logLevel: string;
-  // 日志文件名前缀，用于区分不同服务或运行实例。
+  // 日志文件名前缀，对应环境变量 `LOG_FILE_PREFIX`。
   logFilePrefix: string;
-  // 是否在控制台输出日志；生产环境默认关闭，开发环境通常打开。
+  // 是否在控制台输出日志，对应环境变量 `LOG_TO_CONSOLE`。
   logToConsole: boolean;
-  // 当前模板的前端根路由前缀，默认格式为 `/app/<package-name>`。
+  // 当前模板的前端根路由前缀；固定由包名推导，不允许环境变量覆盖。
   routerPrefix: string;
-  // 进入后端代理逻辑的统一前缀，默认在 routerPrefix 下继续挂 `/proxy`。
+  // 进入后端代理逻辑的统一前缀；固定由 routerPrefix 推导，不允许环境变量覆盖。
   proxyPrefix: string;
-  // 生产环境前端构建资源对外暴露的公共路径前缀。
+  // 生产环境前端构建资源对外暴露的公共路径前缀；固定由 routerPrefix 推导，不允许环境变量覆盖。
   frontendAssetsPublicPath: string;
-  // 后端 `/api` 代理目标地址，用于将请求转发到真实业务 API 服务。
+  // 后端 `/api` 代理目标地址，对应环境变量 `PROXY_API`。
   proxyApi: string;
-  // 数据库总配置，统一提供给 Prisma、pg 连接池和健康检查使用。
+  // 数据库总配置，对应环境变量 `DATABASE_URL`、`DB_SSL`、`DB_POOL_MAX`、`DB_POOL_MIN`、
+  // `DB_IDLE_TIMEOUT_MS`、`DB_CONNECTION_TIMEOUT_MS`、`DB_MAX_LIFETIME_MS`、`DB_ALLOW_EXIT_ON_IDLE`。
   database: DatabaseConfig;
+  // 是否启用全局速率限制，对应环境变量 `ENABLE_THROTTLE`。
+  enableThrottle: boolean;
 };
 
 type EnvFileEntry = {
@@ -85,8 +110,8 @@ type EnvFileEntry = {
   value: string;
 };
 
-// 加载 service 目录下的环境变量文件，允许 mode 文件覆盖基础 .env。
-// 优先尊重外部注入的 process.env，避免覆盖容器或启动命令显式传入的值。
+// 加载 service 目录下的环境变量文件。
+// 优先级为：启动前已注入的 process.env > `.env.${NODE_ENV}` > `.env`。
 function loadEnvironmentFiles(): void {
   const initialEnvKeys = new Set(Object.keys(process.env));
   const nodeEnv = process.env.NODE_ENV ?? 'development';
@@ -225,30 +250,30 @@ function parseBoolean(rawValue: string | undefined, fallbackValue: boolean): boo
 }
 
 // 将模板约定的数据库环境变量整理成统一配置对象。
-// 这里负责把分散的环境变量收敛成应用内部统一使用的 database 配置。
+// 这里负责把 `DATABASE_URL`、`DB_SSL` 与各项 `DB_*` 连接池变量收敛为统一配置。
 function resolveDatabaseConfig(rawEnv: NodeJS.ProcessEnv): DatabaseConfig {
   const poolMax = parseInteger(rawEnv.DB_POOL_MAX, 10, 1);
   const poolMin = parseInteger(rawEnv.DB_POOL_MIN, 0, 0);
 
   return {
-    // 当前模板固定使用 PostgreSQL，保留该字段用于标识数据库类型。
+    // 当前模板固定使用 PostgreSQL；不提供环境变量覆盖入口。
     provider: 'postgresql',
-    // 数据库连接串，供 Prisma 和原生 pg 连接池共同使用。
+    // 数据库连接串，对应环境变量 `DATABASE_URL`。
     url: rawEnv.DATABASE_URL ?? '',
-    // 是否通过 SSL 连接数据库，常用于生产环境托管数据库。
+    // 是否通过 SSL 连接数据库，对应环境变量 `DB_SSL`。
     ssl: parseBoolean(rawEnv.DB_SSL, false),
     pool: {
-      // 连接池最小保活连接数，降低低频流量时的重复建连开销。
+      // 连接池最小保活连接数，对应环境变量 `DB_POOL_MIN`。
       min: Math.min(poolMin, poolMax),
-      // 连接池最大连接数，用于限制服务对数据库的并发连接占用。
+      // 连接池最大连接数，对应环境变量 `DB_POOL_MAX`。
       max: poolMax,
-      // 空闲连接的最长保留时间，超时后连接池会自动回收。
+      // 空闲连接的最长保留时间，对应环境变量 `DB_IDLE_TIMEOUT_MS`。
       idleTimeoutMs: parseInteger(rawEnv.DB_IDLE_TIMEOUT_MS, 10000, 0),
-      // 获取连接时的超时时间，避免连接池耗尽后无限等待。
+      // 获取连接时的超时时间，对应环境变量 `DB_CONNECTION_TIMEOUT_MS`。
       connectionTimeoutMs: parseInteger(rawEnv.DB_CONNECTION_TIMEOUT_MS, 5000, 0),
-      // 单个连接的最大生命周期，超过后会被轮换；0 表示不主动轮换。
+      // 单个连接的最大生命周期，对应环境变量 `DB_MAX_LIFETIME_MS`。
       maxLifetimeMs: parseInteger(rawEnv.DB_MAX_LIFETIME_MS, 0, 0),
-      // 允许全部连接空闲时不阻塞 Node 进程退出。
+      // 允许全部连接空闲时不阻塞 Node 进程退出，对应环境变量 `DB_ALLOW_EXIT_ON_IDLE`。
       allowExitOnIdle: parseBoolean(rawEnv.DB_ALLOW_EXIT_ON_IDLE, false),
     },
   };
@@ -269,26 +294,18 @@ function parseServiceEnvConfig(): Partial<EnvConfig> {
   }
 }
 
-// 从 process.env 中提取覆盖项，并保持 router/proxy 的默认推导关系。
+// 从 process.env 中提取允许覆盖的字段。
 // 这里的字段都是“可以被环境变量直接覆盖”的公开配置入口。
 function resolveEnvOverrides(baseConfig: EnvConfig): Partial<EnvConfig> {
-  const routerPrefix = process.env.ROUTER_PREFIX ?? baseConfig.routerPrefix;
-  const proxyPrefix = process.env.PROXY_PREFIX ?? `${routerPrefix}/proxy`;
-  const frontendAssetsPublicPath =
-    process.env.FRONTEND_ASSETS_PUBLIC_PATH ?? `${routerPrefix}/frontend/dist/`;
-
   return {
     servicePort: parsePort(process.env.SERVICE_PORT, baseConfig.servicePort),
     frontendPort: parsePort(process.env.FRONTEND_PORT, baseConfig.frontendPort),
-    logDir: process.env.LOG_DIR ?? baseConfig.logDir,
     logLevel: process.env.LOG_LEVEL ?? baseConfig.logLevel,
     logFilePrefix: process.env.LOG_FILE_PREFIX ?? baseConfig.logFilePrefix,
     logToConsole: parseBoolean(process.env.LOG_TO_CONSOLE, baseConfig.logToConsole),
-    routerPrefix,
-    proxyPrefix,
-    frontendAssetsPublicPath,
     proxyApi: process.env.PROXY_API ?? baseConfig.proxyApi,
     database: resolveDatabaseConfig(process.env),
+    enableThrottle: parseBoolean(process.env.ENABLE_THROTTLE, baseConfig.enableThrottle),
   };
 }
 
@@ -298,36 +315,38 @@ const pkg = JSON.parse(readFileSync(path.join(repoRoot, 'package.json'), 'utf-8'
 const routerPrefix = `/app/${pkg.name}`;
 
 const baseConfig: EnvConfig = {
-  // 读取仓库根 package.json，作为模板级默认元信息来源。
+  // 读取仓库根 package.json，作为模板级默认元信息来源；不允许环境变量覆盖。
   pkg,
-  // 所有运行时路径都通过推导得到，避免在代码里散落路径拼接。
+  // 所有运行时路径都通过推导得到；不允许环境变量覆盖。
   paths: runtimePaths,
+  // 前端主路由前缀，默认形如 `/app/nest-vite-template`；不允许环境变量覆盖。
+  routerPrefix,
+  // 代理前缀，标识“从前端进入再由 service 分发”的请求；不允许环境变量覆盖。
+  proxyPrefix: `${routerPrefix}/proxy`,
+  // 前端打包资源对外暴露的 URL 前缀；不允许环境变量覆盖。
+  frontendAssetsPublicPath: `${routerPrefix}/frontend/dist/`,
+  // 默认将日志写入 service/logs；不允许环境变量覆盖。
+  logDir: path.join(runtimePaths.serviceRoot, 'logs'),
   // 后端服务默认监听 3000，可用 `SERVICE_PORT` 覆盖。
   servicePort: 3000,
   // 前端开发服务默认监听 3100，可用 `FRONTEND_PORT` 覆盖。
   frontendPort: 3100,
-  // 默认将日志写入 service/logs。
-  logDir: path.join(runtimePaths.serviceRoot, 'logs'),
   // 默认记录到普通 `log` 级别；可通过 `LOG_LEVEL` 提高或降低输出量。
   logLevel: 'log',
-  // 日志文件默认前缀为 service，便于按天滚动时识别来源。
+  // 日志文件默认前缀为 service；可通过 `LOG_FILE_PREFIX` 覆盖。
   logFilePrefix: 'service',
-  // 生产环境默认不输出到控制台，避免与文件日志重复。
+  // 生产环境默认不输出到控制台；可通过 `LOG_TO_CONSOLE` 覆盖。
   logToConsole: false,
-  // 前端主路由前缀，默认形如 `/app/nest-vite-template`。
-  routerPrefix,
-  // 代理前缀，标识“从前端进入再由 service 分发”的请求。
-  proxyPrefix: `${routerPrefix}/proxy`,
-  // 前端打包资源对外暴露的 URL 前缀，生产环境模板渲染时会用到。
-  frontendAssetsPublicPath: `${routerPrefix}/frontend/dist/`,
-  // `/api` 的默认代理目标地址，通常需要按实际后端服务改写。
+  // `/api` 的默认代理目标地址；可通过 `PROXY_API` 覆盖。
   proxyApi: 'http://localhost:4000/test',
-  // 数据库默认读取当前 process.env；若未配置 DATABASE_URL，会得到空连接串。
+  // 数据库默认从 `DATABASE_URL`、`DB_SSL` 与各项 `DB_*` 变量组装；未配置时使用默认值。
   database: resolveDatabaseConfig(process.env),
+  // 全局速率限制默认关闭，使用者按需通过 `ENABLE_THROTTLE` 开启。
+  enableThrottle: false,
 };
 
 // 最终配置合并顺序：
 // 1. baseConfig 默认值
 // 2. 常规环境变量覆盖
 // 3. SERVICE_ENV_CONFIG JSON 覆盖
-export default merge({}, baseConfig, resolveEnvOverrides(baseConfig), parseServiceEnvConfig());
+export default deepMerge({}, baseConfig, resolveEnvOverrides(baseConfig), parseServiceEnvConfig());

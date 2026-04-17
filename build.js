@@ -162,6 +162,9 @@ WORKDIR $ARRANGE_PATH/out/bin
 
 EXPOSE 3000
 
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \\
+  CMD node -e "require('http').get('http://localhost:3000/health',(r)=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"
+
 CMD ["./start.sh"]
 `;
 
@@ -188,6 +191,12 @@ services:
       LOG_TO_CONSOLE: "false"
     volumes:
       - "./docker-data/logs:/home/admin/source/out/service/logs"
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health',(r)=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
 `;
 
   fs.writeFileSync(composePath, composeContent);

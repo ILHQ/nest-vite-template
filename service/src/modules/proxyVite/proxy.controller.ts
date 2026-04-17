@@ -1,4 +1,6 @@
 import { Controller, Get, Redirect, Render, All, Req, Res } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
+import { ApiExcludeController } from '@nestjs/swagger';
 import { ProxyViteService } from './proxy.service';
 import type { Request, Response } from 'express';
 import envConfig from '@services/env';
@@ -17,6 +19,8 @@ type ViteManifestEntry = {
 
 type ViteManifest = Record<string, ViteManifestEntry>;
 
+@ApiExcludeController()
+@SkipThrottle()
 @Controller()
 export class ProxyViteController {
   constructor(
@@ -47,13 +51,6 @@ export class ProxyViteController {
       status,
       database,
     };
-  }
-
-  // 服务环境变量
-  @Get(`/env`)
-  @SkipResponseWrap()
-  getEnv(): typeof envConfig {
-    return envConfig;
   }
 
   // 接口代理/api前缀

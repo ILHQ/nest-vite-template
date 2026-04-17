@@ -7,7 +7,7 @@ import { useEffect } from 'react';
 const Home = () => {
   useEffect(() => {
     getTest().then((res) => console.log(res));
-  });
+  }, []);
   return (
     <div>
       <img width={200} height={200} src={reactImg} alt="" />
