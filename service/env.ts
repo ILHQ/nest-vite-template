@@ -73,6 +73,11 @@ export type DatabaseConfig = {
   pool: DatabasePoolConfig;
 };
 
+export type RedisConfig = {
+  // Redis 连接串；作为 Redis 客户端的唯一配置入口。
+  url: string;
+};
+
 type EnvConfig = {
   // 仓库 package.json 中读取到的基础信息；固定由代码读取，不允许环境变量覆盖。
   pkg: PackageJson;
@@ -101,6 +106,8 @@ type EnvConfig = {
   // 数据库总配置，对应环境变量 `DATABASE_URL`、`DB_SSL`、`DB_POOL_MAX`、`DB_POOL_MIN`、
   // `DB_IDLE_TIMEOUT_MS`、`DB_CONNECTION_TIMEOUT_MS`、`DB_MAX_LIFETIME_MS`、`DB_ALLOW_EXIT_ON_IDLE`。
   database: DatabaseConfig;
+  // Redis 配置，对应环境变量 `REDIS_URL`。
+  redis: RedisConfig;
   // 是否启用全局速率限制，对应环境变量 `ENABLE_THROTTLE`。
   enableThrottle: boolean;
 };
@@ -279,6 +286,13 @@ function resolveDatabaseConfig(rawEnv: NodeJS.ProcessEnv): DatabaseConfig {
   };
 }
 
+// Redis 统一使用连接串作为唯一入口，避免 host/port/db 等多组变量分裂。
+function resolveRedisConfig(rawEnv: NodeJS.ProcessEnv): RedisConfig {
+  return {
+    url: rawEnv.REDIS_URL ?? '',
+  };
+}
+
 // 解析容器环境变量中的 JSON 配置，非法 JSON 时忽略。
 function parseServiceEnvConfig(): Partial<EnvConfig> {
   const rawConfig = process.env.SERVICE_ENV_CONFIG;
@@ -305,6 +319,7 @@ function resolveEnvOverrides(baseConfig: EnvConfig): Partial<EnvConfig> {
     logToConsole: parseBoolean(process.env.LOG_TO_CONSOLE, baseConfig.logToConsole),
     proxyApi: process.env.PROXY_API ?? baseConfig.proxyApi,
     database: resolveDatabaseConfig(process.env),
+    redis: resolveRedisConfig(process.env),
     enableThrottle: parseBoolean(process.env.ENABLE_THROTTLE, baseConfig.enableThrottle),
   };
 }
@@ -341,6 +356,8 @@ const baseConfig: EnvConfig = {
   proxyApi: 'http://localhost:4000/test',
   // 数据库默认从 `DATABASE_URL`、`DB_SSL` 与各项 `DB_*` 变量组装；未配置时使用默认值。
   database: resolveDatabaseConfig(process.env),
+  // Redis 默认从 `REDIS_URL` 读取；未配置时留空，由调用侧决定是否启用。
+  redis: resolveRedisConfig(process.env),
   // 全局速率限制默认关闭，使用者按需通过 `ENABLE_THROTTLE` 开启。
   enableThrottle: false,
 };

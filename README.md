@@ -3,7 +3,7 @@
 全栈模板项目，包含：
 
 - `frontend`：React 18 + Vite + React Router + Ant Design
-- `service`：NestJS 11 + Prisma 7 + PostgreSQL
+- `service`：NestJS 11 + Prisma 7 + PostgreSQL + Redis 查询基础模块
 - 根目录构建脚本：统一完成前后端构建、归档、Docker 镜像打包
 
 架构图见：[architecture-diagram.png](/Users/lcc/my/nest-vite-template/architecture-diagram.png)
@@ -14,6 +14,7 @@
 - 开发态由 `service` 代理前端资源与业务 API
 - 构建态由 `service` 直接托管 `frontend/dist`
 - 数据库访问同时支持 Prisma 和原生 `pg`
+- Redis 查询通过独立基础模块统一接入
 - 支持打包为离线分发的 Docker 镜像归档
 
 ## 2. 目录结构
@@ -84,6 +85,7 @@ nest-vite-template/
 - `PROXY_PREFIX`：代理前缀，默认 `${ROUTER_PREFIX}/proxy`
 - `PROXY_API`：外部业务 API 地址
 - `DATABASE_URL`：PostgreSQL 连接串
+- `REDIS_URL`：Redis 连接串
 - `LOG_DIR` / `LOG_LEVEL` / `LOG_FILE_PREFIX` / `LOG_TO_CONSOLE`
 
 ### 4.2 数据库配置
@@ -101,6 +103,15 @@ nest-vite-template/
 当前示例数据访问封装：
 
 - [`TestSettingRepository`](/Users/lcc/my/nest-vite-template/service/src/database/repositories/test-setting.repository.ts)
+
+### 4.3 Redis 配置
+
+Redis 查询能力集中在：
+
+- `service/src/redis/`
+- `service/env.ts`
+
+当前首版只提供按 key 查询字符串值的基础能力，统一通过 `REDIS_URL` 配置连接串。
 
 ## 5. 常用命令
 
@@ -196,12 +207,18 @@ npm run buildDocker
 - `BusinessModules`
   - 示例业务接口
   - 引入 `DatabaseModule`
+  - 引入 `RedisModule`
 
 - `DatabaseModule`
   - `PrismaService`
   - `postgresPoolProvider`
   - `DatabaseHealthService`
   - `TestSettingRepository`
+
+- `RedisModule`
+  - `redisClientProvider`
+  - `RedisService`
+  - `RedisQueryRepository`
 
 ### 7.2 请求链路
 
