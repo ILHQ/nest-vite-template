@@ -1,18 +1,21 @@
-// 生成运行时使用的 Prisma Client，供服务层通过 @prisma/client 访问数据库。
 generator client {
   provider = "prisma-client-js"
 }
 
-// 声明当前 Prisma 模型映射到 PostgreSQL 数据库。
 datasource db {
   provider = "postgresql"
 }
 
-// 模板项目的示例配置表，用于演示 Prisma 的基础读写路径。
 model TestSetting {
   id        String   @id @default(cuid())
   key       String   @unique
   value     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model geom {
+  id       Int                      @id @default(autoincrement())
+  name     String?
+  geometry Unsupported("geometry")?
 }
