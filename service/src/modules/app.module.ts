@@ -3,6 +3,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ProxyViteModules } from './proxyVite/proxy.modules';
 import { BusinessModules } from './business/business.modules';
+import { TileModules } from './tile/tile.modules';
 import envConfig from '@services/env';
 
 const optionalImports: DynamicModule[] = [];
@@ -14,7 +15,7 @@ if (envConfig.enableThrottle) {
 }
 
 @Module({
-  imports: [...optionalImports, BusinessModules, ProxyViteModules],
+  imports: [...optionalImports, TileModules, BusinessModules, ProxyViteModules],
   controllers: [],
   providers: [...optionalProviders],
 })

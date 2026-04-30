@@ -109,7 +109,9 @@ function isStandardResponse<T = unknown>(value: unknown): value is StandardRespo
   );
 }
 
-function handleStandardResponseError(response: StandardResponse<unknown>): StandardResponse<unknown> {
+function handleStandardResponseError(
+  response: StandardResponse<unknown>,
+): StandardResponse<unknown> {
   const errorDesc = response.errorDesc || '请求失败';
   message.error(errorDesc);
 
@@ -329,7 +331,7 @@ request.interceptors.request.use(
 
 // 响应拦截器
 request.interceptors.response.use(
-  (response: ResponsePayload<unknown>) => {
+  (response: any) => {
     if (response?.config?.needCheckSuccess) {
       return response.data;
     }

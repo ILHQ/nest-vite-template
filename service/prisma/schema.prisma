@@ -15,7 +15,9 @@ model TestSetting {
 }
 
 model geom {
-  id       Int                      @id @default(autoincrement())
-  name     String?
-  geometry Unsupported("geometry")?
+  id         Int                        @id @default(autoincrement())
+  name       String?
+  color      String?
+  geometry   Unsupported("geometry")?
+  geometry3d Unsupported("geometry3d")?
 }

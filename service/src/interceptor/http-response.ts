@@ -1,5 +1,6 @@
 import { HttpException } from '@nestjs/common';
 import envConfig from '@services/env';
+import { isTileRoutePath } from '@/modules/tile/tile.constants';
 
 // 统一定义项目内部 HTTP 报文结构与构造工具。
 export type ApiErrorType = 'BUSINESS' | 'HTTP' | 'SYSTEM';
@@ -44,6 +45,10 @@ export function shouldUseStandardResponse(requestPath: string): boolean {
 
   if (pathname === '/health') {
     return true;
+  }
+
+  if (isTileRoutePath(pathname)) {
+    return false;
   }
 
   return (

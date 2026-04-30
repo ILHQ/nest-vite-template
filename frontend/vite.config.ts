@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import * as path from 'path';
 import { cpSync, existsSync, mkdirSync } from 'node:fs';
 import envConfig from '../service/env';
+import vitePluginDeepTwinsEngine3D from 'vite-plugin-deeptwins-engine-3d';
 
 const routerBasename =
   envConfig.routerPrefix === '/' ? '/' : envConfig.routerPrefix.replace(/\/$/, '');
@@ -36,7 +37,13 @@ export default defineConfig(({ command }) => {
       __APP_ROUTER_BASENAME__: JSON.stringify(routerBasename),
       __APP_PROXY_PREFIX__: JSON.stringify(envConfig.proxyPrefix),
     },
-    plugins: [react(), copyPublicToDistPublicPlugin()],
+    plugins: [
+      react(),
+      vitePluginDeepTwinsEngine3D({
+        deepTwinsBasePath: `/app/nest-vite-template/tile3d/DeepTwinsEngine3D`,
+      }),
+      copyPublicToDistPublicPlugin(),
+    ],
     resolve: {
       tsconfigPaths: true,
     },

@@ -13,7 +13,9 @@
   "dependencies": {
     "@deepinnet/model-context": "^0.0.3",
     "antd": "^6.3.5",
+    "deeptwins-engine-3d": "^0.1.66",
     "lodash-es": "^4.17.21",
+    "maplibre-gl": "^5.24.0",
     "react": "^18.x",
     "react-dom": "^18.x",
     "react-router-dom": "^6.x"
@@ -28,6 +30,7 @@
     "postcss": "^8.5.3",
     "postcss-pxtorem": "^6.1.0",
     "typescript": "~5.8.3",
-    "vite": "^8.0.8"
+    "vite": "^8.0.8",
+    "vite-plugin-deeptwins-engine-3d": "^0.1.1"
   }
 }

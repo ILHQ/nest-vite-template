@@ -13,6 +13,20 @@ const routes: RouteObject[] = [
     path: '/home',
     element: <Home />,
   },
+  {
+    path: '/tile2d',
+    lazy: async () => {
+      const module = await import('@/pages/tile2d');
+      return { Component: module.default };
+    },
+  },
+  {
+    path: '/tile3d',
+    lazy: async () => {
+      const module = await import('@/pages/tile3d');
+      return { Component: module.default };
+    },
+  },
 ];
 
 const router = createBrowserRouter(routes, {
