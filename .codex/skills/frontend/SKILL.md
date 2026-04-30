@@ -1,6 +1,6 @@
 ---
 name: frontend
-description: 仅在当前仓库的 `frontend/` 目录下创建、生成、修改或重构 React 18 的 JS/TS/TSX 代码，覆盖页面组件、业务逻辑、路由、请求调用、工具函数、常量、hooks 与数据处理。用于用户提到“新增 frontend 页面”“修改 frontend 代码”“改 TSX 组件”“新增 React 组件”“重构前端组件”“调整 hooks 用法”“处理 useEffect/useCallback”“抽公共方法”“新增工具函数”“整理常量配置”“新增页面路由”“修改 frontend/src 下文件”“在 frontend 目录下开发功能”等场景；当请求重点是组件结构、事件逻辑、状态流转、接口调用、路由、工具方法、常量、TSX/TypeScript，而不是 Less/CSS/布局视觉时，优先使用此 skill。若任务主要是样式、class、Less、CSS、主题 token、间距、颜色、圆角、阴影、页面布局视觉，则不要使用本 skill，而应交给 `web-style`。若任务不涉及 `frontend/` 目录也不要使用。强制遵循仓库约束：使用 React 18.x、`useEffect` 只在初始化或明确需要监听时使用、优先用函数调用而非副作用驱动、`useCallback` 一般不监听依赖、重复代码出现 3 次及以上必须抽取、跨页面复用代码放 `frontend/src/tools/common.ts` 或 `frontend/src/tools/utils.ts`、静态文案进入 `frontend/src/tools/constant.ts`、生成代码添加简短注释。
+description: 仅在当前仓库的 `frontend/` 目录下创建、生成、修改或重构 React 18 的 JS/TS/TSX 代码，覆盖页面组件、业务逻辑、路由、请求调用、工具函数、常量、hooks 与数据处理。用于用户提到“新增 frontend 页面”“修改 frontend 代码”“改 TSX 组件”“新增 React 组件”“重构前端组件”“调整 hooks 用法”“处理 useEffect/useCallback”“抽公共方法”“新增工具函数”“整理常量配置”“新增页面路由”“修改 frontend/src 下文件”“在 frontend 目录下开发功能”等场景；当请求重点是组件结构、事件逻辑、状态流转、接口调用、路由、工具方法、常量、TSX/TypeScript，而不是 Less/CSS/布局视觉时，优先使用此 skill。若任务主要是样式、class、Less、CSS、主题 token、间距、颜色、圆角、阴影、页面布局视觉，则不要使用本 skill，而应交给 `web-style`。若任务不涉及 `frontend/` 目录也不要使用。强制遵循仓库约束：使用 React 18.x、`useEffect` 只在初始化或明确需要监听时使用、优先用函数调用而非副作用驱动、`useCallback` 一般不监听依赖、重复代码出现 3 次及以上必须抽取、跨页面复用代码放 `frontend/src/tools/common.ts` 或 `frontend/src/tools/utils.ts`、全局或多页面共用的状态/类型定义及接口返回相关共享定义放入 `frontend/src/tools/constant.ts`、生成代码添加简短注释。
 ---
 
 # Frontend
@@ -52,9 +52,10 @@ import { useModel } from '@deepinnet/model-context';
 const { name } = useModel('useCommon');
 ```
 
-- 常量统一放入 `frontend/src/tools/constant.ts`。
-- 页面中出现的静态字符都要抽到常量文件，或复用常量文件已有项。
-- 常量命名使用大写加下划线，最多 3 个名词，例如 `USER_TYPE`、`PAGE_STATUS`。
+- 全局或多页面共用的状态定义、枚举映射、接口返回相关共享定义统一放入 `frontend/src/tools/constant.ts`。
+- 页面内仅当前场景使用的静态文案不必强制抽到常量文件；只有存在全局复用、多页面复用或接口语义复用时，才进入 `frontend/src/tools/constant.ts`。
+- 共享常量命名使用大写加下划线，最多 3 个名词，例如 `USER_TYPE`、`PAGE_STATUS`。
+- 共享类型定义命名使用 PascalCase，例如 `UserTypeItem`、`OrderStatusItem`。
 - 常量内容使用如下结构：
 
 ```ts

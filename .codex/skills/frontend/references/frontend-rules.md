@@ -123,20 +123,24 @@ const { name } = useModel('useCommon');
 
 ## 常量规则
 
-- 页面中出现的静态字符都需要进入 `frontend/src/tools/constant.ts`
-- 优先复用已有常量，不重复创建同义常量
+- 页面内仅当前场景使用的静态文案，不需要机械抽到 `frontend/src/tools/constant.ts`
+- 只有全局或多页面可能复用的状态、枚举映射、类型定义，或与接口返回结构强相关的共享定义，才进入 `frontend/src/tools/constant.ts`
+- 优先复用已有共享定义，不重复创建同义常量或同义类型
 
 ### 命名规范
 
-- 名称大写
-- 使用 `_` 连接
-- 最多 3 个名词
+- 运行时常量名称大写
+- 运行时常量使用 `_` 连接
+- 运行时常量最多 3 个名词
+- 类型定义使用 PascalCase
 
 推荐：
 
 - `USER_TYPE`
 - `PAGE_STATUS`
 - `ORDER_TAB`
+- `UserTypeItem`
+- `OrderStatusItem`
 
 避免：
 
@@ -149,6 +153,13 @@ const { name } = useModel('useCommon');
 export const USER_TYPE = {
   customer: { label: '客户', value: 'customer' },
   supplier: { label: '服务商', value: 'supplier' },
+};
+```
+
+```ts
+export type UserTypeItem = {
+  label: string;
+  value: string;
 };
 ```
 
@@ -177,6 +188,7 @@ const loadList = async () => {};
 - 全局共享 hook 是否放在 `frontend/src/models/`
 - 新增 model 后是否已在 `frontend/src/App.tsx` 的 `ModelProvider.models` 中注册
 - 页面取用全局 model 时是否使用 `useModel('useCommon')` 这类方式
-- 是否把静态字符抽到 `tools/constant.ts`
+- 是否只把共享状态、共享类型或接口相关共享定义放入 `tools/constant.ts`
 - 常量名是否符合大写下划线规则
+- 类型名是否符合 PascalCase 规则
 - 是否添加了简短有效注释
