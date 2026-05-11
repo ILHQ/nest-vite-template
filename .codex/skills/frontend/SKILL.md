@@ -54,6 +54,11 @@ const { name } = useModel('useCommon');
 
 - 全局或多页面共用的状态定义、枚举映射、接口返回相关共享定义统一放入 `frontend/src/tools/constant.ts`。
 - 页面内仅当前场景使用的静态文案不必强制抽到常量文件；只有存在全局复用、多页面复用或接口语义复用时，才进入 `frontend/src/tools/constant.ts`。
+- 创建展示性质的列表时，优先使用“字段配置数组 + `render(value, record, index)`”的结构；字段项使用 `label` 与 `value` 描述展示列，循环中统一包裹展示样式，`render` 只负责值转换与兜底展示。
+- 使用 Antd `Form` 时，不要使用循环创建 `Form.Item`；表单项必须直接平铺写出，保证字段结构、顺序和差异点清晰可读。
+- 使用 Antd `Modal` 时，默认不修改标题、关闭按钮、取消按钮、确认按钮的样式；除非用户明确指定需要修改这些默认样式。
+- 对于中台/后台管理系统页面，必须先创建业务目录，业务目录下保留 `index.tsx` 和 `index.less` 作为业务入口；详情页、创建页、编辑页、列表页等二级业务页面必须在该业务目录下创建简洁命名的子目录，并在业务入口 `index.tsx` 中使用 React `Outlet` 承接子路由。
+- 中台/后台管理系统路由必须使用 `{ path: '', element: '', children: [] }` 结构；详情、增删改查等二级页面路由统一放在 `children` 中管理。
 - 共享常量命名使用大写加下划线，最多 3 个名词，例如 `USER_TYPE`、`PAGE_STATUS`。
 - 共享类型定义命名使用 PascalCase，例如 `UserTypeItem`、`OrderStatusItem`。
 - 常量内容使用如下结构：
@@ -73,6 +78,8 @@ export const USER_TYPE = {
 ## 目录落点
 
 - 页面：`frontend/src/pages/<page>/`
+- 中台/后台业务页：`frontend/src/pages/<domain>/<business>/index.tsx` + `index.less`
+- 中台/后台二级页：`frontend/src/pages/<domain>/<business>/<child>/index.tsx` + `index.less`
 - 通用组件：`frontend/src/components/`
 - 全局 hooks：`frontend/src/models/`
 - 业务型公共代码：`frontend/src/tools/common.ts`
@@ -85,6 +92,7 @@ export const USER_TYPE = {
 - 不要因为图省事把本应抽离的逻辑塞回页面组件。
 - 不要为了“响应式风格”滥用 hooks；能直接函数调用就直接调用。
 - 不要提前抽象未来需求，只在重复和跨页面复用明确出现时抽取。
+- 展示性质列表不要直接在 JSX 中堆砌多组重复节点；优先先定义字段数组，再通过 `map` 渲染。
 - 注释只写关键意图、边界或步骤，避免逐行解释代码。
 
 ## 示例
