@@ -83,6 +83,218 @@ const handleRefresh = useCallback(() => {
 - URL 参数处理
 - 时间格式化
 
+## 展示性质列表规则
+
+- 页面中的信息展示列表、资料卡字段列表、详情字段列表等“只读展示型列表”，优先使用字段配置数组驱动渲染。
+- 推荐字段项至少包含：
+  - `label`
+  - `value`
+  - `render(value, record, index)`
+- `value` 优先表示原始字段 key 或原始值本身。
+- `render` 负责格式化、兜底值和特殊展示，不负责外围通用样式。
+- 通用展示样式统一放在 `map` 循环里包裹，避免每个 `render` 重复写相同 class。
+- 若多个展示项都只是纯文本输出，仍保留 `render`，保证结构统一，便于后续单项升级。
+
+推荐：
+
+```tsx
+type DisplayField = {
+  label: string;
+  value: keyof UserInfo;
+  render: (
+    value: UserInfo[keyof UserInfo] | undefined,
+    record: UserInfo,
+    index: number
+  ) => React.ReactNode;
+};
+
+const fields: DisplayField[] = [
+  {
+    label: '手机号',
+    value: 'phone',
+    render: (value) => (typeof value === 'string' ? value : '-'),
+  },
+];
+
+{fields.map((field, index) => (
+  <div key={index}>
+    <div>{field.label}</div>
+    <div className="value">{field.render(record?.[field.value], record, index)}</div>
+  </div>
+))}
+```
+
+避免：
+
+```tsx
+<div className="item">
+  <div className="label">手机号</div>
+  <div className="value">{phone || '-'}</div>
+</div>
+<div className="item">
+  <div className="label">邮箱</div>
+<div className="value">{email || '-'}</div>
+</div>
+```
+
+## Antd Form 规则
+
+- 使用 Antd `Form` 时，不要通过数组 `map`、配置驱动或循环批量创建 `Form.Item`。
+- 表单项必须直接平铺写出，保持每个字段的名称、校验、占位文案和差异逻辑清晰可见。
+- 只有在用户明确要求做动态表单生成时，才允许使用循环或配置式创建。
+
+推荐：
+
+```tsx
+<Form>
+  <Form.Item name="name" label="姓名">
+    <Input placeholder="请输入姓名" />
+  </Form.Item>
+
+  <Form.Item name="phone" label="手机号">
+    <Input placeholder="请输入手机号" />
+  </Form.Item>
+</Form>
+```
+
+避免：
+
+```tsx
+const fields = [
+  { name: 'name', label: '姓名' },
+  { name: 'phone', label: '手机号' },
+];
+
+<Form>
+  {fields.map((field) => (
+    <Form.Item key={field.name} name={field.name} label={field.label}>
+      <Input />
+    </Form.Item>
+  ))}
+</Form>
+```
+
+## Antd Modal 规则
+
+- 使用 Antd `Modal` 时，默认保留其标题、关闭按钮、取消按钮、确认按钮的默认样式。
+- 不要自定义 Modal 头部来替代默认标题和关闭按钮。
+- 不要额外覆盖 `.ant-modal-title`、关闭按钮、默认 footer 按钮样式。
+- 只有用户明确要求修改这些区域时，才允许定制对应样式或结构。
+
+推荐：
+
+```tsx
+<Modal
+  open={open}
+  title="新增地址"
+  onOk={handleSubmit}
+  onCancel={handleCancel}
+/>
+```
+
+避免：
+
+```tsx
+<Modal footer={null}>
+  <div className="modal-head">
+    <span className="modal-title">新增地址</span>
+    <button type="button">关闭</button>
+  </div>
+</Modal>
+```
+
+## 中台/后台目录规则
+
+- 中台/后台管理系统页面必须按“业务目录 + 子业务目录”组织。
+- 先创建业务目录，业务目录下必须保留：
+  - `index.tsx`
+  - `index.less`
+- 详情、创建、编辑、列表、配置等二级页面必须在业务目录下创建对应子目录。
+- 子目录命名保持简洁，不使用冗长业务前缀。
+- 业务入口 `index.tsx` 负责承接路由层级，必须使用 React `Outlet`。
+
+推荐目录：
+
+```text
+frontend/src/pages/admin/order/
+  index.tsx
+  index.less
+  detail/
+    index.tsx
+    index.less
+  edit/
+    index.tsx
+    index.less
+  create/
+    index.tsx
+    index.less
+```
+
+避免：
+
+```text
+frontend/src/pages/admin/
+  OrderListPage.tsx
+  OrderDetailPage.tsx
+  OrderCreatePage.tsx
+```
+
+推荐入口：
+
+```tsx
+import { Outlet } from 'react-router-dom';
+
+export default function OrderPage() {
+  return <Outlet />;
+}
+```
+
+## 中台/后台路由规则
+
+- 中台/后台业务路由必须使用嵌套路由结构。
+- 外层业务路由统一写成 `{ path: '', element: '', children: [] }` 形式。
+- 详情、增删改查等子路由统一写到 `children` 中，不要平铺在同层。
+
+推荐：
+
+```tsx
+{
+  path: 'order',
+  element: <OrderPage />,
+  children: [
+    {
+      index: true,
+      element: <OrderListPage />,
+    },
+    {
+      path: 'detail/:id',
+      element: <OrderDetailPage />,
+    },
+    {
+      path: 'create',
+      element: <OrderCreatePage />,
+    },
+    {
+      path: 'edit/:id',
+      element: <OrderEditPage />,
+    },
+  ],
+}
+```
+
+避免：
+
+```tsx
+{
+  path: 'order',
+  element: <OrderListPage />,
+},
+{
+  path: 'order-detail/:id',
+  element: <OrderDetailPage />,
+}
+```
+
 ## 全局 hooks 规则
 
 - `frontend/src/models/` 目录用于放置全局 hooks。
@@ -189,6 +401,12 @@ const loadList = async () => {};
 - 新增 model 后是否已在 `frontend/src/App.tsx` 的 `ModelProvider.models` 中注册
 - 页面取用全局 model 时是否使用 `useModel('useCommon')` 这类方式
 - 是否只把共享状态、共享类型或接口相关共享定义放入 `tools/constant.ts`
+- 展示性质列表是否优先使用字段配置数组 + `render(value, record, index)` 驱动渲染
+- 使用 Antd `Form` 时是否直接平铺写出 `Form.Item`
+- 使用 Antd `Modal` 时是否保留了标题、关闭按钮和默认 footer 按钮样式
+- 中台/后台页面是否使用“业务目录 + 子业务目录”结构
+- 中台/后台业务入口是否使用 `Outlet`
+- 中台/后台路由是否使用 `children` 管理详情、增删改查等子页面
 - 常量名是否符合大写下划线规则
 - 类型名是否符合 PascalCase 规则
 - 是否添加了简短有效注释
